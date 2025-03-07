@@ -1,16 +1,17 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+import sqlite3
+import matplotlib.pyplot as plt
+from datetime import datetime
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+conn = sqlite3.connect('gym_tracker.db')
+c = conn.cursor()
+c.execute('''
+          CREATE TABLE IF NOT EXISTS workouts (
+              date DATE,
+              machine TEXT,
+              weight REAL,
+              rating INTEGER,
+              PRIMARY KEY (date, machine)
+          )
+          ''')
+conn.commit()
