@@ -37,15 +37,34 @@ class Database:
     def commit(self):
         self._connection.commit()
 
+    def plot_weights(self, machine):
+        self._cursor.execute(f'''
+            SELECT date, weight 
+            FROM {self.table_name} 
+            WHERE machine = ?
+        ''', (machine,))
+        data = self._cursor.fetchall()
+        print(data)
+        dates = [row[0] for row in data]
+        weights = [row[1] for row in data]
+
+        plt.figure(figsize=(10, 5))
+        plt.plot(dates, weights, marker='o')
+        plt.title(f'Weight Progression for {machine}')
+        plt.xlabel('Date')
+        plt.ylabel('Weight')
+        plt.grid(True)
+        plt.show()
+
 
 db = Database('gym_tracker.db', 'workouts')
-# db.drop_table()
-# db.create_table()
-# db.commit()
+db.drop_table()
+db.create_table()
+db.commit()
 db.add_workout(str(datetime.today().date()), 'бицепс', 35)
 db.add_workout(datetime(2025, 3, 1).date(), 'Bench Press', 60, 5)
 db.add_workout(datetime(2025, 3, 2).date(), 'Bench Press', 62.5, 4)
 db.add_workout(datetime(2025, 3, 3).date(), 'Bench Press', 65, 4)
 db.add_workout(datetime(2025, 3, 4).date(), 'Bench Press', 70, 2)
 db.commit()
-print(type(datetime(2025, 3, 4).date()))
+db.plot_weights('Bench Press')
