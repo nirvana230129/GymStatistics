@@ -1,6 +1,8 @@
 import sqlite3
 import matplotlib.pyplot as plt
 from datetime import datetime
+import tkinter as tk
+from tkinter import messagebox
 
 
 class Database:
@@ -67,4 +69,60 @@ db.add_workout(datetime(2025, 3, 2).date(), 'Bench Press', 62.5, 4)
 db.add_workout(datetime(2025, 3, 3).date(), 'Bench Press', 65, 4)
 db.add_workout(datetime(2025, 3, 4).date(), 'Bench Press', 70, 2)
 db.commit()
-db.plot_weights('Bench Press')
+
+
+# Функция для добавления данных о тренировке
+def add_workout_entry():
+    date = date_entry.get()
+    machine = machine_entry.get()
+    weight = weight_entry.get()
+    rating = rating_entry.get()
+    description = description_entry.get()
+
+    try:
+        db.add_workout(datetime.strptime(date, '%Y-%m-%d').date(), machine, float(weight), int(rating), description)
+        db.commit()
+        messagebox.showinfo("Success", "Workout added successfully!")
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
+
+# Функция для отображения графика
+def plot_weights_graph():
+    machine = machine_entry.get()
+    db.plot_weights(machine)
+
+# Создание главного окна
+root = tk.Tk()
+root.title("Gym Tracker")
+
+# Поля для ввода данных
+tk.Label(root, text="Date (YYYY-MM-DD)").grid(row=0, column=0)
+date_entry = tk.Entry(root)
+date_entry.grid(row=0, column=1)
+
+tk.Label(root, text="Machine").grid(row=1, column=0)
+machine_entry = tk.Entry(root)
+machine_entry.grid(row=1, column=1)
+
+tk.Label(root, text="Weight").grid(row=2, column=0)
+weight_entry = tk.Entry(root)
+weight_entry.grid(row=2, column=1)
+
+tk.Label(root, text="Rating (1-5)").grid(row=3, column=0)
+rating_entry = tk.Entry(root)
+rating_entry.grid(row=3, column=1)
+
+tk.Label(root, text="Description").grid(row=4, column=0)
+description_entry = tk.Entry(root)
+description_entry.grid(row=4, column=1)
+
+# Кнопка для добавления данных
+add_button = tk.Button(root, text="Add Workout", command=add_workout_entry)
+add_button.grid(row=5, column=0, columnspan=2)
+
+# Кнопка для отображения графика
+plot_button = tk.Button(root, text="Plot Weights", command=plot_weights_graph)
+plot_button.grid(row=6, column=0, columnspan=2)
+
+# Запуск главного цикла
+root.mainloop()
