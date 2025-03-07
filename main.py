@@ -23,10 +23,19 @@ class Database:
             );
         ''')
 
+    def add_workout(self, date, machine, weight=None, rating=None):
+        self._cursor.execute(f'''
+            INSERT INTO {self.table_name} (date, machine, weight, rating)
+            VALUES (?, ?, ?, ?)
+        ''', (date, machine, weight, rating))
+
     def commit(self):
         self._connection.commit()
 
 db = Database('gym_tracker.db', 'workouts')
 db.drop_table()
 db.create_table()
+db.commit()
+db.add_workout(str(datetime.today().date()), 'бицепс',35)
+db.add_workout(datetime(2025, 3, 1).date(), 'Bench Press', 80, 4)
 db.commit()
