@@ -54,7 +54,7 @@ class Database:
     def add_workout(
             self,
             workout_date: date,
-            exercise: str,
+            exercise_name: str,
             weight: float = None,
             feeling_rating: int = None,
             description: str = None
@@ -62,15 +62,15 @@ class Database:
         """
         Adds a new workout to the database.
         :param workout_date: date of the workout.
-        :param exercise: name of the exercise.
+        :param exercise_name: name of the exercise.
         :param weight: weight that was used during the workout.
         :param feeling_rating: feeling rating (from 1 to 5).
         :param description: additional information about the workout.
         """
-        self._cursor.execute('SELECT id FROM Exercises WHERE name = ?;', (exercise,))
+        self._cursor.execute('SELECT id FROM Exercises WHERE name = ?;', (exercise_name,))
         data = self._cursor.fetchone()
         if data is None:
-            raise ValueError(f'There is no "{exercise}" exercise')
+            raise ValueError(f'There is no "{exercise_name}" exercise')
         exercise_id = data[0]
 
         try:
@@ -79,19 +79,21 @@ class Database:
                 VALUES (?, ?, ?, ?, ?);
             ''', (workout_date, exercise_id, weight, feeling_rating, description))
         except sqlite3.IntegrityError:
-            raise Exception(f'Workout with {exercise} on {workout_date} already exists')
+            raise Exception(f'Workout with {exercise_name} on {workout_date} already exists')
 
-    def find_workout(self, workout_date: date, exercise_id: int) -> tuple | None:
+    def find_workout(self, workout_date: date, exercise_name: str) -> tuple | None:
         """
         Finds a workout with the given date and exercise ID.
         :param workout_date: date of the workout.
-        :param exercise_id: id of the exercise.
+        :param exercise_name: name of the exercise.
         :return: workout or None if no workout with the given date and exercise ID.
         """
-        self._cursor.execute('SELECT * FROM Workouts WHERE date = ? AND exercise_id = ?;',
-                             (workout_date, exercise_id))
-        data = self._cursor.fetchone()
-        return data or None
+        exercise_id = self.get_exercise_id(exercise_name)
+        if exercise_id is not None:
+            self._cursor.execute('SELECT * FROM Workouts WHERE date = ? AND exercise_id = ?;',
+                                 (workout_date, exercise_id))
+            data = self._cursor.fetchone()
+            return data or None
 
     def add_exercise(self, exercise_name: str) -> None:
         """
@@ -109,7 +111,7 @@ class Database:
     def get_exercise_id(self, exercise_name: str) -> int | None:
         """
         Finds an exercise with the given name.
-        :param exercise_name:
+        :param exercise_name: name of the exercise.
         :return: exercise ID or None if no exercise with the given name.
         """
         self._cursor.execute('SELECT id FROM Exercises WHERE name = ?;', (exercise_name,))
@@ -131,7 +133,7 @@ class Database:
         """
         self._cursor.execute('SELECT * FROM Workouts W JOIN Exercises E ON W.exercise_id = E.id')
         data = self._cursor.fetchall()
-        print(data)
+        print(data, end='\n\n')
 
     # def plot_weights(self, machine):
     #     self._cursor.execute('''
@@ -290,16 +292,16 @@ class Interface:
             return None
         print('-' * 60)
 
-        rating = self._input_num('rating', int)
-        if rating is None:
+        feeling_rating = self._input_num('feeling rating(1-5)', int)
+        if feeling_rating is None:
             return None
         print('-' * 60)
 
         description = input('    Enter description: ')
 
-        self.db.add_workout(exercise_date, exercise_name, weight, rating, description)
+        self.db.add_workout(exercise_date, exercise_name, weight, feeling_rating, description)
         self.db.commit()
-        return self.db.find_workout(exercise_date, self.db.get_exercise_id(exercise_name))
+        return self.db.find_workout(exercise_date, exercise_name)
 
     def print_all(self) -> None:
         """
@@ -321,8 +323,4 @@ while inp != 'exit' and inp != '0':
     elif inp.lower() in ['Print all', '2']:
         interface.print_all()
 
-    elif inp.lower() in ['Print all', '3']:
-        print(interface.db.get_all_exercises())
-
     inp = input(f'Enter command ({tip}): ')
-
