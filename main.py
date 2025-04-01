@@ -1,6 +1,6 @@
 import sqlite3
 import matplotlib.pyplot as plt
-from datetime import datetime, date
+from datetime import date
 
 
 class Database:
@@ -91,7 +91,7 @@ class Database:
         self._cursor.execute('SELECT * FROM Workouts WHERE date = ? AND exercise_id = ?;',
                              (workout_date, exercise_id))
         data = self._cursor.fetchone()
-        return data[0] if data else None
+        return data or None
 
     def add_exercise(self, exercise_name: str) -> None:
         """
@@ -178,7 +178,7 @@ class Interface:
                   'ноги сверху вниз (правый)', 'соку бачи вира', 'висюля', 'от сердца к солнцу', 'дорожка', 'бицепс']:
             self.db.add_exercise(i)
         self.db.commit()
-        self.db.add_workout(datetime.today().date(), 'бицепс', 35)
+        self.db.add_workout(date.today(), 'бицепс', 35)
         self.db.commit()
 
     @staticmethod
@@ -194,7 +194,7 @@ class Interface:
             """
             try:
                 if user_input == 't':
-                    return datetime.now().date()
+                    return date.today()
                 if 2 <= len(user_input):
                     for el in user_input:
                         if not el.isdigit():
@@ -203,11 +203,11 @@ class Interface:
                             break
                     else:
                         month, day = map(int, [user_input[0], user_input[1:]])
-                    current_year = datetime.now().year
-                    res_date = datetime(current_year, month, day)
-                    if res_date > datetime.now():
-                        res_date = datetime(current_year - 1, month, day)
-                    return res_date.date()
+                    current_year = date.today().year
+                    res_date = date(current_year, month, day)
+                    if res_date > date.today():
+                        res_date = date(current_year - 1, month, day)
+                    return res_date
             except ValueError:
                 print("\tIncorrect date format. Please enter the date in mm-dd format.")
 
@@ -316,7 +316,7 @@ tip = '0.Exit, 1.Add workout day, 2.Print all'
 inp = input(f'Enter command ({tip}): ')
 while inp != 'exit' and inp != '0':
     if inp.lower() in ['add workout day', '1']:
-        interface.add_workout()
+        print(interface.add_workout(), end='\n\n')
 
     elif inp.lower() in ['Print all', '2']:
         interface.print_all()
