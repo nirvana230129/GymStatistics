@@ -170,17 +170,16 @@ class Interface:
         if clear:
             self.db.drop()
             self.db.create()
+            self.fill_exercises()
             self.db.commit()
 
-    def fill_rubbish(self) -> None:
+    def fill_exercises(self) -> None:
         """
-        Fills the database with a rubbish.
+        Fills the database with exercises.
         """
         for i in ['подтягивания узкие', 'подтягивания широкие', 'ноги снизу вверх (первые 2)', 'дельта', 'спина',
                   'ноги сверху вниз (правый)', 'соку бачи вира', 'висюля', 'от сердца к солнцу', 'дорожка', 'бицепс']:
             self.db.add_exercise(i)
-        self.db.commit()
-        self.db.add_workout(date.today(), 'бицепс', 35)
         self.db.commit()
 
     @staticmethod
@@ -277,8 +276,8 @@ class Interface:
         Adds a workout to the database.
         :return: added workout or None if something went wrong.
         """
-        exercise_date = self._input_date()
-        if exercise_date is None:
+        workout_date = self._input_date()
+        if workout_date is None:
             return None
         print('-' * 60)
 
@@ -299,9 +298,54 @@ class Interface:
 
         description = input('    Enter description: ')
 
-        self.db.add_workout(exercise_date, exercise_name, weight, feeling_rating, description)
+        self.db.add_workout(workout_date, exercise_name, weight, feeling_rating, description)
         self.db.commit()
-        return self.db.find_workout(exercise_date, exercise_name)
+        return self.db.find_workout(workout_date, exercise_name)
+
+    def add_full_workout_day(self) -> None:
+        """
+        Adds a full workout day to the database.
+        """
+        workout_date = self._input_date()
+        if workout_date is None:
+            return None
+        print('-' * 60)
+
+        for exercise_name in self.db.get_all_exercises():
+            again = True
+            while again:
+                again = False
+                user_input = '-'
+                while user_input != 'skip' and user_input != '':
+                    user_input = input(f'\n\n"{exercise_name.capitalize()}" ({workout_date}). Enter "Skip" to skip '
+                                     f'this exercise or press enter to continue: ').strip().lower()
+                if user_input == 'skip':
+                    break
+
+                print('-' * 60)
+                weight = self._input_num('weight', float)
+                if weight is None:
+                    return None
+                print('-' * 60)
+                feeling_rating = self._input_num('feeling rating(1-5)', int)
+                if feeling_rating is None:
+                    return None
+                print('-' * 60)
+                description = input('    Enter description: ').strip()
+                print('-' * 60)
+
+                user_input = '-'
+                while user_input != 'skip' and user_input != 'again' and user_input != '':
+                    user_input = input(f'"{exercise_name.capitalize()}" ({workout_date}) {weight}kg {feeling_rating}/5 '
+                                       f'({description}). Enter "Skip" to skip this exercise or enter "Again" to edit '
+                                       f'current exercise or press enter to continue: ').strip().lower()
+                if user_input == 'skip':
+                    break
+                if user_input == 'again':
+                    again = True
+                else:
+                    self.db.add_workout(workout_date, exercise_name, weight, feeling_rating, description)
+        self.db.commit()
 
     def print_all(self) -> None:
         """
@@ -311,16 +355,18 @@ class Interface:
 
 
 
-interface = Interface(db_file='gym_tracker.db', clear=True)
-interface.fill_rubbish()
+interface = Interface(db_file='gym_tracker.db')
 
-tip = '0.Exit, 1.Add workout day, 2.Print all'
+tip = '0.Exit, 1.Add workout day, 2.Add single workout, 3.Print all'
 inp = input(f'Enter command ({tip}): ')
 while inp != 'exit' and inp != '0':
     if inp.lower() in ['add workout day', '1']:
+        interface.add_full_workout_day()
+
+    if inp.lower() in ['add single workout', '2']:
         print(interface.add_workout(), end='\n\n')
 
-    elif inp.lower() in ['Print all', '2']:
+    elif inp.lower() in ['Print all', '3']:
         interface.print_all()
 
     inp = input(f'Enter command ({tip}): ')
