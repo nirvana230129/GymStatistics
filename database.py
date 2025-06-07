@@ -1,5 +1,4 @@
 import sqlite3
-import matplotlib.pyplot as plt
 from datetime import date
 
 
@@ -278,8 +277,6 @@ class Interface:
         """
         workout_date = self._input_date()
         if workout_date is None:
-        workout_date = self._input_date()
-        if workout_date is None:
             return None
         print('-' * 60)
 
@@ -360,19 +357,14 @@ class Interface:
 interface = Interface(db_file='gym_tracker.db')
 
 tip = '0.Exit, 1.Add workout day, 2.Add single workout, 3.Print all'
-tip = '0.Exit, 1.Add workout day, 2.Add single workout, 3.Print all'
 inp = input(f'Enter command ({tip}): ')
 while inp != 'exit' and inp != '0':
     if inp.lower() in ['add workout day', '1']:
         interface.add_full_workout_day()
 
     if inp.lower() in ['add single workout', '2']:
-        interface.add_full_workout_day()
-
-    if inp.lower() in ['add single workout', '2']:
         print(interface.add_workout(), end='\n\n')
 
-    elif inp.lower() in ['Print all', '3']:
     elif inp.lower() in ['Print all', '3']:
         interface.print_all()
 
