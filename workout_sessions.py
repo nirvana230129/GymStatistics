@@ -67,7 +67,7 @@ class Workout:
 
     def cast2list(self) -> list['Workout']:
         """
-        Casts the workout to a list.
+        Casts the workout to a list of workouts.
         """
         if not self._is_list:
             return [self]
@@ -110,15 +110,16 @@ class Workout:
 
 class WorkoutSessionsTable(Table):
     """
-    This class is responsible for working with the workout sessions table.
+    This class is responsible for working with the WorkoutSessions table.
     """
 
-    def __init__(self, db_file: str) -> None:
+    def __init__(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
         """
         Connects to the database.
-        :param db_file: database file to connect to.
+        :param connection: connection to the database.
+        :param cursor: cursor to the database.
         """
-        super().__init__(db_file, 'WorkoutSessions')
+        super().__init__('WorkoutSessions', connection, cursor)
 
     def create(self) -> None:
         """
@@ -147,12 +148,12 @@ class WorkoutSessionsTable(Table):
             );
         ''')
 
-    def add_workout(self, workout: Workout) -> None:
+    def add_workout_session(self, workout_session: Workout) -> None:
         """
         Adds a new workout to the database.
         :param workout: workout to add.
         """
-        for w in workout.cast2list():
+        for w in workout_session.cast2list():
             try:
                 self._cursor.execute(f'''
                     INSERT INTO WorkoutSessions 
@@ -163,7 +164,7 @@ class WorkoutSessionsTable(Table):
                     w.distance_in_meters, w.feeling, w.local_order)
                 )
             except sqlite3.IntegrityError:
-                raise Exception(f'Workout with {workout.exercise_id} on {workout.workout_date} already exists')
+                raise Exception(f'Workout with {workout_session.exercise_id} on {workout_session.workout_date} already exists')
 
     def add_workout_session(self, workout_sessions: list[Workout]) -> None:
         """

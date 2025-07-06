@@ -7,14 +7,15 @@ class Table(ABC):
     Table class is the interface for working with tables.
     """
 
-    def __init__(self, db_file: str, table_name: str) -> None:
+    def __init__(self, table_name: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
         """
         Connects to the database.
-        :param db_file: database file to connect to.
         :param table_name: name of the table.
+        :param connection: connection to the database.
+        :param cursor: cursor to the database.
         """
-        self._connection = sqlite3.connect(db_file)
-        self._cursor = self._connection.cursor()
+        self._connection = connection
+        self._cursor = cursor
         self._table_name = table_name
 
     def drop(self) -> None:

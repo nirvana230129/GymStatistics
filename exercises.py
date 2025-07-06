@@ -5,15 +5,16 @@ from table import Table
 
 class ExercisesTable(Table):
     """
-    This class is responsible for working with the exercises table.
+    This class is responsible for working with the Exercises table.
     """
 
-    def __init__(self, db_file: str) -> None:
+    def __init__(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
         """
         Connects to the database.
-        :param db_file: database file to connect to.
+        :param connection: connection to the database.
+        :param cursor: cursor to the database.
         """
-        super().__init__(db_file, 'Exercises')
+        super().__init__('Exercises', connection, cursor)
 
     def create(self) -> None:
         """
