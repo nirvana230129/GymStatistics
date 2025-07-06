@@ -44,15 +44,18 @@ class ExercisesTable(Table):
         except sqlite3.IntegrityError as e:
             print(e)
 
-    # def get_exercise_id(self, exercise_name: str) -> int | None:
-    #     """
-    #     Finds an exercise with the given name.
-    #     :param exercise_name: name of the exercise.
-    #     :return: exercise ID or None if no exercise with the given name.
-    #     """
-    #     self._cursor.execute('SELECT id FROM Exercises WHERE name = ?;', (exercise_name,))
-    #     data = self._cursor.fetchone()
-    #     return data[0] if data else None
+    def get_exercise_id(self, exercise_name: str, may_be_alias: bool = False) -> int | None:
+        """
+        Finds an exercise with the given name.
+        :param exercise_name: name of the exercise.
+        :return: exercise ID or None if no exercise with the given name.
+        """
+        if may_be_alias:
+            self._cursor.execute('SELECT id FROM Exercises WHERE name = ? OR alias = ?;', (exercise_name, exercise_name))
+        else:
+            self._cursor.execute('SELECT id FROM Exercises WHERE name = ?;', (exercise_name,))
+        data = self._cursor.fetchone()
+        return data[0] if data else None
 
     # def get_all_exercises(self) -> list[str]:
     #     """
