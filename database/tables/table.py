@@ -36,18 +36,17 @@ class Table(ABC):
         Commits the changes to the database.
         """
         self._connection.commit()
-        """
-        Gets all exercises.
-        :return: list of all exercises.
-        """
-        self._cursor.execute('SELECT name FROM Exercises;')
-        data = self._cursor.fetchall()
-        return [i[0] for i in data]
 
-    def print_all(self) -> None:
+    def get_all_data(self) -> list[tuple]:
+        """
+        Gets all data from the table.
+        :return: list of all data.
+        """
+        self._cursor.execute(f'SELECT * FROM {self._table_name};')
+        return self._cursor.fetchall()
+
+    def print_all_data(self) -> None:
         """
         Prints all data of the table.
         """
-        self._cursor.execute(f'SELECT * FROM {self._table_name};')
-        data = self._cursor.fetchall()
-        print(data, end='\n\n')
+        print(self.get_all_data(), end='\n\n')
