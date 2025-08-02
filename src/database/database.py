@@ -14,8 +14,6 @@ class Database:
         """
         Connects to the database.
         :param db_file: database file to connect to.
-        :param exercises_table: exercises table.
-        :param workouts_table: workouts table.
         """
         self._connection = sqlite3.connect(db_file)
         self._cursor = self._connection.cursor()
@@ -119,21 +117,9 @@ class Database:
         data = self._cursor.fetchall()
         print(*data, sep='\n', end='\n\n')
 
-    # def plot_weights(self, machine):
-    #     self._cursor.execute('''
-    #         SELECT date, weight
-    #         FROM Workouts
-    #         WHERE machine = ?
-    #     ''', (machine,))
-    #     data = self._cursor.fetchall()
-    #     print(data)
-    #     dates = [row[0] for row in data]
-    #     weights = [row[1] for row in data]
-    #
-    #     plt.figure(figsize=(10, 5))
-    #     plt.plot(dates, weights, marker='o')
-    #     plt.title(f'Weight Progression for {machine}')
-    #     plt.xlabel('Date')
-    #     plt.ylabel('Weight')
-    #     plt.grid(True)
-    #     plt.show()
+    def plot_weights(self, exercise_name: str):
+        """
+        Plots the weight progression for the given exercise.
+        :param exercise_name: name of the exercise.
+        """
+        pass
