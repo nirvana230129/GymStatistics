@@ -30,7 +30,7 @@ class Interface:
             ['Neutral Pull Up', 'Подтягивания узкие', 'Arms (Biceps)'],
             ['Wide Pull Up', 'Подтягивания широкие', 'Back'],
             ['Leg Extension', 'Ноги снизу вверх (первые 2)', 'Legs (Quadriceps)'],
-            ['Seated Row', 'Широчайшие', 'Back (Lats) '],
+            ['Seated Row', 'Широчайшие', 'Back (Lats)'],
             ['Wide Grip Lat Pulldown', 'Спина', 'Back'],
             ['Seated Leg Curl', 'Ноги сверху вниз (правый)', 'Legs (Hamstrings)'],
             ['Pec Deck', 'Соку бачи вира', 'Chest'],

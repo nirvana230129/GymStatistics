@@ -105,6 +105,18 @@ class TestWorkout:
         assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7, 9], [100, 200, 300], [5, 6.5, 5])
 
 
+@pytest.fixture
+def db_connection():
+    connection = sqlite3.connect('../gym_tracker.db')
+    yield connection
+    connection.close()
+
+@pytest.fixture
+def db_cursor(db_connection):
+    cursor = db_connection.cursor()
+    yield cursor
+    cursor.close()
+
 
 class TestWorkoutSessions:
     weight1 = Workout(
@@ -144,16 +156,13 @@ class TestWorkoutSessions:
         feeling=3,
     )
 
-    connection = sqlite3.connect('../gym_tracker.db')
-    cursor = connection.cursor()
-
-    def test_create(self):
-        table = WorkoutSessionsTable(self.connection, self.cursor)
+    def test_create(self, db_connection, db_cursor):
+        table = WorkoutSessionsTable(db_connection, db_cursor)
         table.create()
         assert table
     
-    def test_add_workout(self):
-        table = WorkoutSessionsTable(self.connection, self.cursor)
+    def test_add_workout(self, db_connection, db_cursor):
+        table = WorkoutSessionsTable(db_connection, db_cursor)
         table.drop()
         table.create()
 
@@ -164,8 +173,8 @@ class TestWorkoutSessions:
         with pytest.raises(sqlite3.IntegrityError):
             table.add_workout(self.weight1)
     
-    def test_add_workout_session(self):
-        table = WorkoutSessionsTable(self.connection, self.cursor)
+    def test_add_workout_session(self, db_connection, db_cursor):
+        table = WorkoutSessionsTable(db_connection, db_cursor)
         table.drop()
         table.create()
 

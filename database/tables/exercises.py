@@ -36,13 +36,10 @@ class ExercisesTable(Table):
         :param alias: alias of the exercise.
         :param target_muscle_group: target muscle group of the exercise.
         """
-        try:
-            self._cursor.execute('''
-                INSERT INTO Exercises (name, alias, target_muscle_group)
-                VALUES (?, ?, ?);
-            ''', (exercise_name, alias, target_muscle_group))
-        except sqlite3.IntegrityError as e:
-            print(e)
+        self._cursor.execute('''
+            INSERT INTO Exercises (name, alias, target_muscle_group)
+            VALUES (?, ?, ?);
+        ''', (exercise_name, alias, target_muscle_group))
 
     def get_exercise_id(self, exercise_name: str, may_be_alias: bool = False) -> int | None:
         """
@@ -56,12 +53,3 @@ class ExercisesTable(Table):
             self._cursor.execute('SELECT id FROM Exercises WHERE name = ?;', (exercise_name,))
         data = self._cursor.fetchone()
         return data[0] if data else None
-
-    # def get_all_exercises(self) -> list[str]:
-    #     """
-    #     Gets all exercises.
-    #     :return: list of all exercises.
-    #     """
-    #     self._cursor.execute('SELECT name FROM Exercises;')
-    #     data = self._cursor.fetchall()
-    #     return [i[0] for i in data]
