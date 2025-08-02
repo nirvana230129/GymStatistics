@@ -1,8 +1,6 @@
-import matplotlib.pyplot as plt
 from datetime import date
-
 from database.database import Database
-from database.tables.workout_sessions import Workout
+# from database.tables.workout_sessions import Workout
 
 
 class Interface:
@@ -245,8 +243,8 @@ class Interface:
 #     inp = input(f'Enter command ({tip}): ')
 
 
-db = Database('gym_tracker.db')
-interface = Interface(db, clear=True)
-interface.print_all()
-db._workouts_table.print_all_data()
-db._exercises_table.print_all_data()
+db = Database('src/database/gym_tracker.db')
+# interface = Interface(db, clear=True)
+# interface.print_all()
+# db._workouts_table.print_all_data()
+# db._exercises_table.print_all_data()

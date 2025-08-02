@@ -1,8 +1,7 @@
 import sqlite3
 from datetime import date
-
-from tables.exercises import ExercisesTable
-from tables.workout_sessions import Workout, WorkoutSessionsTable
+from .tables.exercises import ExercisesTable
+from .tables.workout_sessions import Workout, WorkoutSessionsTable
 
 
 class Database:

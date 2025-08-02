@@ -1,6 +1,5 @@
 import sqlite3
-
-from table import Table
+from .table import Table
 
 
 class ExercisesTable(Table):
