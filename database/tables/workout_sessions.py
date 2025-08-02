@@ -16,20 +16,20 @@ class Workout:
                  sets: int, 
                  weight: float | list[float] = None, 
                  repetitions: int | list[int] = None, 
-                 time_in_seconds: int | list[int] = None, 
+                 time: int | list[int] = None, 
                  speed: float | list[float] = None, 
                  units: str = None,
                  feeling: int = None,
                  local_order: int = 0) -> None:
         """
-        Initializes a workout. Either weight and repetitions (for exercises with machines or additional equipment) or time_in_seconds and speed (for cardio exercises) must be provided.
+        Initializes a workout. Either weight and repetitions (for exercises with machines or additional equipment) or time and speed (for cardio exercises) must be provided.
         :param workout_date: date of the workout.
         :param exercise_id: ID of the exercise.
         :param order_number: order number of the exercise in the workout.
         :param sets: number of sets (for cardio exercises sets are parts with constant speed).
         :param weight: weight that was used during the workout (in machine or in equipment). If it is a list, it means that the weight was different for each set.
         :param repetitions: number of repetitions. If it is a list, it means that the number of repetitions was different for each set.
-        :param time_in_seconds: if it is a list, it means that the time was different for each set.
+        :param time: time in seconds. If it is a list, it means that the time was different for each set.
         :param speed: if it is a list, it means that the speed varied during the exercise.
         :param units: the units of weight on the machine, the weight of an equipment, or the speed (kg/lbs or kph/mph).
         :param feeling: feeling rating (from 1 to 5).
@@ -37,10 +37,10 @@ class Workout:
         """
         if weight is not None and repetitions is not None:
             self._weight_or_speed = 0
-        elif time_in_seconds is not None and speed is not None:
+        elif time is not None and speed is not None:
             self._weight_or_speed = 1
         else:
-            raise ValueError('Either weight and repetitions (for exercises with machines or additional equipment) or time_in_seconds and speed (for cardio exercises) must be provided.')
+            raise ValueError('Either weight and repetitions (for exercises with machines or additional equipment) or time and speed (for cardio exercises) must be provided.')
             
         if feeling is not None and not 1 <= feeling <= 5:
             raise ValueError("Feeling rating must be from 1 to 5")
@@ -55,15 +55,15 @@ class Workout:
                 raise ValueError('The number of weights must be equal to the number of sets')
             if isinstance(repetitions, list) and len(repetitions) != sets:
                 raise ValueError('The number of repetitions must be equal to the number of sets')
-            time_in_seconds = None
+            time = None
             speed = None
         else:
-            if isinstance(time_in_seconds, list) and len(time_in_seconds) != sets:
+            if isinstance(time, list) and len(time) != sets:
                 raise ValueError('The number of times must be equal to the number of sets')
             if isinstance(speed, list) and len(speed) != sets:
                 raise ValueError('The number of speeds must be equal to the number of sets')
-            if isinstance(time_in_seconds, list) ^ isinstance(speed, list):
-                raise ValueError('Either all time_in_seconds and speed must be lists or none of them must be lists')
+            if isinstance(time, list) ^ isinstance(speed, list):
+                raise ValueError('Either all time and speed must be lists or none of them must be lists')
             weight = None
             repetitions = None
 
@@ -76,7 +76,7 @@ class Workout:
         self.sets = sets
         self.weight = weight
         self.repetitions = repetitions
-        self.time_in_seconds = time_in_seconds
+        self.time = time
         self.speed = speed
         self.units = units
         self.feeling = feeling
@@ -99,7 +99,7 @@ class Workout:
                 sets=1, 
                 weight=self.weight[i] if self._weight_or_speed == 0 else self.weight, 
                 repetitions=self.repetitions[i] if self._weight_or_speed == 0 and isinstance(self.repetitions, list) else self.repetitions, 
-                time_in_seconds=self.time_in_seconds[i] if self._weight_or_speed == 1 else self.time_in_seconds, 
+                time=self.time[i] if self._weight_or_speed == 1 else self.time, 
                 speed=self.speed[i] if self._weight_or_speed == 1 else self.speed, 
                 units=self.units, 
                 feeling=self.feeling,
@@ -118,18 +118,18 @@ class Workout:
                f'\tsets: {self.sets},\n'\
                f'\tweight: {self.weight},\n'\
                f'\trepetitions: {self.repetitions},\n'\
-               f'\ttime_in_seconds: {self.time_in_seconds},\n'\
+               f'\ttime: {self.time},\n'\
                f'\tspeed: {self.speed},\n'\
                f'\tunits: {self.units},\n'\
                f'\tfeeling: {self.feeling},\n'\
-               f'\tlocal_order: {self.local_order},\n'\
-               '\n}'
+               f'\tlocal_order: {self.local_order}'\
+                '}\n'
 
 
 
 class WorkoutSessionsTable(Table):
     """
-    This class is responsible for working with the WorkoutSessions table.
+    This class is responsible for working with the WorkoutSessions table. Workout session describes full workout in the gym.
     """
 
     def __init__(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
@@ -150,20 +150,22 @@ class WorkoutSessionsTable(Table):
                 date DATE NOT NULL,
                 exercise_id INTEGER NOT NULL,
                 order_number INTEGER NOT NULL,
+                sets INTEGER CHECK(sets > 0),
                 weight REAL,
-                weight_unit TEXT CHECK(weight_unit IN ('kg', 'lbs', 'kph', 'mph') OR weight_unit IS NULL),
-                repetitions INTEGER,
-                sets INTEGER,
-                time_in_seconds INTEGER,
-                distance_in_meters INTEGER,
+                repetitions INTEGER CHECK(repetitions > 0),
+                time INTEGER CHECK(time > 0),
+                speed REAL CHECK(speed > 0),
+                units TEXT CHECK(units IN ('kg', 'lbs', 'kph', 'mph') OR units IS NULL),
                 feeling INTEGER CHECK(feeling BETWEEN 1 AND 5),
                 local_order INTEGER CHECK(local_order >= 0 AND local_order < sets),
-                FOREIGN KEY (exercise_id) REFERENCES Exercises(id),
-                CHECK (
-                    (weight IS NOT NULL AND weight_unit IS NOT NULL AND repetitions IS NOT NULL AND sets IS NOT NULL)
+                
+                CHECK(
+                    (weight IS NOT NULL AND repetitions IS NOT NULL)
                     OR
-                    (time_in_seconds IS NOT NULL AND distance_in_meters IS NOT NULL)
-                )
+                    (time IS NOT NULL AND speed IS NOT NULL)
+                ),
+                UNIQUE(date, order_number),
+                FOREIGN KEY (exercise_id) REFERENCES Exercises(id)
             );
         ''')
 
@@ -173,17 +175,12 @@ class WorkoutSessionsTable(Table):
         :param workout: workout to add.
         """
         for w in workout.convert2list():
-            try:
-                self._cursor.execute(f'''
-                    INSERT INTO WorkoutSessions 
-                    (date, exercise_id, order_number, weight, weight_unit, repetitions, sets, time_in_seconds, distance_in_meters, feeling, local_order)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-                ''', (w.workout_date, w.exercise_id, w.order_number, w.weight, 
-                    w.weight_unit, w.repetitions, w.sets, w.time_in_seconds, 
-                    w.distance_in_meters, w.feeling, w.local_order)
-                )
-            except sqlite3.IntegrityError:
-                raise Exception(f'Workout with {workout.exercise_id} on {workout.workout_date} already exists')
+            self._cursor.execute(f'''
+                INSERT INTO WorkoutSessions 
+                (date, exercise_id, order_number, sets, weight, repetitions, time, speed, units, feeling, local_order)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ''', (w.workout_date, w.exercise_id, w.order_number, w.sets, w.weight, w.repetitions, w.time, w.speed, w.units, w.feeling, w.local_order)
+            )
 
     def add_workout_session(self, workout_sessions: list[Workout]) -> None:
         """

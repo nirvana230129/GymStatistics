@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from datetime import date
 
 from database.database import Database
-from workout_sessions import Workout
+from database.tables.workout_sessions import Workout
 
 
 class Interface:

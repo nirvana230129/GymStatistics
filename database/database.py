@@ -1,8 +1,8 @@
 import sqlite3
 from datetime import date
 
-from exercises import ExercisesTable
-from workout_sessions import Workout, WorkoutSessionsTable
+from tables.exercises import ExercisesTable
+from tables.workout_sessions import Workout, WorkoutSessionsTable
 
 
 class Database:
@@ -42,6 +42,15 @@ class Database:
         """
         self._connection.commit()
 
+    def add_exercise(self, exercise_name: str, alias: str = None, target_muscle_group: str = None) -> None:
+        """
+        Adds a new exercise to the database.
+        :param exercise_name: name of the exercise.
+        :param alias: alias of the exercise.
+        :param target_muscle_group: target muscle group of the exercise.
+        """
+        self._exercises_table.add_exercise(exercise_name, alias, target_muscle_group)
+
     def add_workout(self,
                     workout_date: date, 
                     exercise_name: str, 
@@ -73,28 +82,19 @@ class Database:
         workout = Workout(workout_date, exercise_id, order_number, weight, weight_unit, repetitions, sets, time_in_seconds, distance_in_meters, feeling)
         self._workouts_table.add_workout(workout)
 
-    def add_exercise(self, exercise_name: str, alias: str = None, target_muscle_group: str = None) -> None:
+    def find_workout(self, workout_date: date, exercise_name: str) -> tuple | None:
         """
-        Adds a new exercise to the database.
+        Finds a workout with the given date and exercise ID.
+        :param workout_date: date of the workout.
         :param exercise_name: name of the exercise.
-        :param alias: alias of the exercise.
-        :param target_muscle_group: target muscle group of the exercise.
+        :return: workout or None if no workout with the given date and exercise ID.
         """
-        self._exercises_table.add_exercise(exercise_name, alias, target_muscle_group)
-
-    # def find_workout(self, workout_date: date, exercise_name: str) -> tuple | None:
-    #     """
-    #     Finds a workout with the given date and exercise ID.
-    #     :param workout_date: date of the workout.
-    #     :param exercise_name: name of the exercise.
-    #     :return: workout or None if no workout with the given date and exercise ID.
-    #     """
-    #     exercise_id = self.get_exercise_id(exercise_name)
-    #     if exercise_id is not None:
-    #         self._cursor.execute('SELECT * FROM Workouts WHERE date = ? AND exercise_id = ?;',
-    #                              (workout_date, exercise_id))
-    #         data = self._cursor.fetchone()
-    #         return data or None
+        exercise_id = self.get_exercise_id(exercise_name)
+        if exercise_id is not None:
+            self._cursor.execute('SELECT * FROM Workouts WHERE date = ? AND exercise_id = ?;',
+                                 (workout_date, exercise_id))
+            data = self._cursor.fetchone()
+            return data or None
 
     def get_all_exercises(self) -> list[str]:
         """

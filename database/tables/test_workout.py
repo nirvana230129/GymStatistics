@@ -1,5 +1,6 @@
-from workout_sessions import Workout
+from workout_sessions import Workout, WorkoutSessionsTable
 import pytest
+import sqlite3
 
 
 class TestWorkout:
@@ -10,7 +11,7 @@ class TestWorkout:
         'sets': 3, 
         'weight': 45, 
         'repetitions': 10, 
-        'time_in_seconds': None, 
+        'time': None, 
         'speed': None, 
         'units': 'kg',
         'feeling': 3,
@@ -23,7 +24,7 @@ class TestWorkout:
         'sets': 3, 
         'weight': None, 
         'repetitions': None, 
-        'time_in_seconds': 600, 
+        'time': 600, 
         'speed': 8.5, 
         'units': 'kph',
         'feeling': 3,
@@ -102,3 +103,76 @@ class TestWorkout:
     def test_type_combinations_mixed(self):
         assert Workout('2025-03-27', 9999, 1, 3, 45, 10, 600, 8.5)
         assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7, 9], [100, 200, 300], [5, 6.5, 5])
+
+
+
+class TestWorkoutSessions:
+    weight1 = Workout(
+        workout_date='2025-03-27', 
+        exercise_id=9999, 
+        order_number=1, 
+        sets=3, 
+        weight=45, 
+        repetitions=10, 
+        time=None, 
+        speed=None, 
+        units='kg',
+        feeling=3,
+    )
+    weight2 = Workout(
+        workout_date='2025-03-27', 
+        exercise_id=9999, 
+        order_number=2, 
+        sets=3, 
+        weight=45, 
+        repetitions=10, 
+        time=None, 
+        speed=None, 
+        units='kg',
+        feeling=3,
+    )
+    speed1 = Workout(
+        workout_date='2025-03-27', 
+        exercise_id=9999, 
+        order_number=1,
+        sets=3, 
+        weight=None, 
+        repetitions=None, 
+        time=600, 
+        speed=8.5, 
+        units='kph',
+        feeling=3,
+    )
+
+    connection = sqlite3.connect('../gym_tracker.db')
+    cursor = connection.cursor()
+
+    def test_create(self):
+        table = WorkoutSessionsTable(self.connection, self.cursor)
+        table.create()
+        assert table
+    
+    def test_add_workout(self):
+        table = WorkoutSessionsTable(self.connection, self.cursor)
+        table.drop()
+        table.create()
+
+        table.add_workout(self.speed1)
+        table.add_workout(self.weight2)
+        assert table
+
+        with pytest.raises(sqlite3.IntegrityError):
+            table.add_workout(self.weight1)
+    
+    def test_add_workout_session(self):
+        table = WorkoutSessionsTable(self.connection, self.cursor)
+        table.drop()
+        table.create()
+
+        table.add_workout_session([self.speed1, self.weight2])
+        assert table
+
+        with pytest.raises(sqlite3.IntegrityError):
+            table.add_workout_session([self.speed1, self.weight1])
+
+        assert table
