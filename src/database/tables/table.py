@@ -16,13 +16,7 @@ class Table(ABC):
         """
         self._connection = connection
         self._cursor = cursor
-        self._table_name = table_name
-
-    def clear(self) -> None:
-        """
-        Clears the table.
-        """
-        self._cursor.execute(f'DELETE FROM {self._table_name};')
+        self.table_name = table_name
 
     @abstractmethod
     def create(self) -> None:
@@ -30,6 +24,18 @@ class Table(ABC):
         Creates the table.
         """
         pass
+
+    def drop(self) -> None:
+        """
+        Delets the table
+        """
+        self._cursor.execute(f'DROP TABLE IF EXISTS {self.table_name};')
+
+    def clear(self) -> None:
+        """
+        Clears the table.
+        """
+        self._cursor.execute(f'DELETE FROM {self.table_name};')
 
     def commit(self) -> None:
         """
@@ -42,7 +48,7 @@ class Table(ABC):
         Gets all data from the table.
         :return: list of all data.
         """
-        self._cursor.execute(f'SELECT * FROM {self._table_name};')
+        self._cursor.execute(f'SELECT * FROM {self.table_name};')
         return self._cursor.fetchall()
 
     def print_all_data(self) -> None:

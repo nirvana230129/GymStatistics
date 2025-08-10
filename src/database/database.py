@@ -17,21 +17,25 @@ class Database:
         self._connection = sqlite3.connect(db_file)
         self._cursor = self._connection.cursor()
         self._exercises_table = ExercisesTable(self._connection, self._cursor)
-        self._workouts_table = WorkoutSessionsTable(self._connection, self._cursor)
+        self._workout_sessions_table = WorkoutSessionsTable(self._connection, self._cursor)
 
     def clear(self) -> None:
         """
         Clears all tables of the database.
         """
         self._exercises_table.clear()
-        self._workouts_table.clear()
+        self._workout_sessions_table.clear()
+        self.commit()
 
     def create(self) -> None:
         """
-        Creates 'Workouts' and 'Exercises' tables.
+        Creates 'WorkoutSessions' and 'Exercises' tables.
         """
+        self._exercises_table.drop()
+        self._workout_sessions_table.drop()
         self._exercises_table.create()
-        self._workouts_table.create()
+        self._workout_sessions_table.create()
+        self.commit()
 
     def commit(self) -> None:
         """
@@ -53,6 +57,7 @@ class Database:
         :param target_muscle_group: target muscle group of the exercise.
         """
         self._exercises_table.add_exercise(exercise_name, alias, target_muscle_group)
+        self.commit()
 
     def add_workout(self,
                     workout_date: date, 
@@ -84,7 +89,8 @@ class Database:
             raise ValueError(f'There is no "{exercise_name}" exercise')
 
         workout = Workout(workout_date, exercise_id, order_number, sets, weight, repetitions, time, speed, units, feeling)
-        self._workouts_table.add_workout(workout)
+        self._workout_sessions_table.add_workout(workout)
+        self.commit()
 
     def find_workout(self, workout_date: date, exercise_name: str) -> tuple | None:
         """
@@ -113,7 +119,7 @@ class Database:
         Gets all exercises.
         :return: list of all exercises.
         """
-        return self._workouts_table.get_all_data()
+        return self._workout_sessions_table.get_all_data()
 
     def get_all_data(self) -> None:
         """
@@ -127,3 +133,4 @@ class Database:
         Plots the weight progression for the given exercise.
         :param exercise_name: name of the exercise.
         """
+        pass
