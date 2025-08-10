@@ -1,6 +1,5 @@
 from datetime import date
-from database.database import Database
-# from database.tables.workout_sessions import Workout
+from database.database import Database, Workout
 
 
 class Interface:
@@ -16,7 +15,7 @@ class Interface:
         """
         self.db = db
         if clear:
-            self.db.drop()
+            self.db.clear()
             self.db.create()
             self.fill_exercises()
 
@@ -244,6 +243,7 @@ class Interface:
 
 
 db = Database('src/database/gym_tracker.db')
+db.plot_weights('Neutral Pull Up')
 # interface = Interface(db, clear=True)
 # interface.print_all()
 # db._workouts_table.print_all_data()
