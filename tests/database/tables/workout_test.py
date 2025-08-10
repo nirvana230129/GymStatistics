@@ -5,29 +5,13 @@ from src.database.tables.workout_sessions import Workout, WorkoutSessionsTable
 
 class TestWorkout:
     weight_example = {
-        'workout_date': '2025-03-27', 
-        'exercise_id': 9999, 
-        'order_number': 1, 
-        'sets': 3, 
-        'weight': 45, 
-        'repetitions': 10, 
-        'time': None, 
-        'speed': None, 
-        'units': 'kg',
-        'feeling': 3,
+        'workout_date': '2025-03-27', 'exercise_id': 9999, 'order_number': 1, 'feeling': 3,
+        'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
     }
 
     speed_example = {
-        'workout_date': '2025-03-27', 
-        'exercise_id': 9999, 
-        'order_number': 1, 
-        'sets': 3, 
-        'weight': None, 
-        'repetitions': None, 
-        'time': 600, 
-        'speed': 8.5, 
-        'units': 'kph',
-        'feeling': 3,
+        'workout_date': '2025-03-27', 'exercise_id': 9999, 'order_number': 1, 'feeling': 3,
+        'sets': 3, 'time': 600, 'speed': 8.5, 'units': 'kph',
     }
 
     def test_feeling(self):
@@ -67,20 +51,20 @@ class TestWorkout:
                 Workout(**example)
 
     def test_type_combinations_weight(self):
-        assert Workout('2025-03-27', 9999, 1, 3, 45, 10, None, None)
-        assert Workout('2025-03-27', 9999, 1, 3, 45, [5, 7, 9], None, None)
-        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], 10, None, None)
-        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7, 9], None, None)
+        assert Workout('2025-03-27', 9999, 1, 3, 45, 10)
+        assert Workout('2025-03-27', 9999, 1, 3, 45, [5, 7, 9])
+        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], 10)
+        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7, 9])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, 45, [5, 7], None, None)
+            Workout('2025-03-27', 9999, 1, 3, 45, [5, 7])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42], 10, None, None)
+            Workout('2025-03-27', 9999, 1, 3, [41, 42], 10)
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42], [5, 7], None, None)
+            Workout('2025-03-27', 9999, 1, 3, [41, 42], [5, 7])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42], [5, 7, 9], None, None)
+            Workout('2025-03-27', 9999, 1, 3, [41, 42], [5, 7, 9])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7], None, None)
+            Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7])
 
     def test_type_combinations_speed(self):
         assert Workout('2025-03-27', 9999, 1, 3, None, None, 600, 8.5)
@@ -120,40 +104,16 @@ def db_cursor(db_connection):
 
 class TestWorkoutSessions:
     weight1 = Workout(
-        workout_date='2025-03-27', 
-        exercise_id=9999, 
-        order_number=1, 
-        sets=3, 
-        weight=45, 
-        repetitions=10, 
-        time=None, 
-        speed=None, 
-        units='kg',
-        feeling=3,
+        workout_date='2025-03-27', exercise_id=9999, order_number=1, feeling=3,
+        sets=3, weight=45, repetitions=10, units='kg',
     )
     weight2 = Workout(
-        workout_date='2025-03-27', 
-        exercise_id=9999, 
-        order_number=2, 
-        sets=3, 
-        weight=45, 
-        repetitions=10, 
-        time=None, 
-        speed=None, 
-        units='kg',
-        feeling=3,
+        workout_date='2025-03-27', exercise_id=9999, order_number=2, feeling=3,
+        sets=3, weight=45, repetitions=10, units='kg',
     )
     speed1 = Workout(
-        workout_date='2025-03-27', 
-        exercise_id=9999, 
-        order_number=1,
-        sets=3, 
-        weight=None, 
-        repetitions=None, 
-        time=600, 
-        speed=8.5, 
-        units='kph',
-        feeling=3,
+        workout_date='2025-03-27', exercise_id=9999, order_number=1, feeling=3,
+        sets=3, time=600, speed=8.5, units='kph',
     )
 
     def test_create(self, db_connection, db_cursor):
@@ -163,25 +123,21 @@ class TestWorkoutSessions:
     
     def test_add_workout(self, db_connection, db_cursor):
         table = WorkoutSessionsTable(db_connection, db_cursor)
-        table.clear()
+        table.drop()
         table.create()
 
         table.add_workout(self.speed1)
         table.add_workout(self.weight2)
-        assert table
 
         with pytest.raises(sqlite3.IntegrityError):
             table.add_workout(self.weight1)
     
     def test_add_workout_session(self, db_connection, db_cursor):
         table = WorkoutSessionsTable(db_connection, db_cursor)
-        table.clear()
+        table.drop()
         table.create()
 
         table.add_workout_session([self.speed1, self.weight2])
-        assert table
 
         with pytest.raises(sqlite3.IntegrityError):
             table.add_workout_session([self.speed1, self.weight1])
-
-        assert table

@@ -29,12 +29,11 @@ class TestExercises:
     
     def test_add_exercise(self, db_connection, db_cursor):
         table = ExercisesTable(db_connection, db_cursor)
-        table.clear()
+        table.drop()
         table.create()
 
         table.add_exercise(**self.exercise1)
         table.add_exercise(**self.exercise2)
-        assert table
 
         for exercise in [self.exercise3, self.exercise4]:
             with pytest.raises(sqlite3.IntegrityError):
@@ -42,12 +41,11 @@ class TestExercises:
     
     def test_get_exercise_id(self, db_connection, db_cursor):
         table = ExercisesTable(db_connection, db_cursor)
-        table.clear()
+        table.drop()
         table.create()
 
         table.add_exercise(**self.exercise1)
         table.add_exercise(**self.exercise2)
-        assert table
 
         assert table.get_exercise_id('A') == 1
         assert table.get_exercise_id('B') == 2

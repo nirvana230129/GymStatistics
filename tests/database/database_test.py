@@ -7,28 +7,12 @@ class TestDatabase:
     file = '../gym_tracker.db'
 
     ws1 = {
-        'workout_date': '2025-03-27', 
-        'exercise_name': 'A', 
-        'order_number': 1, 
-        'sets': 3, 
-        'weight': 45, 
-        'repetitions': 10, 
-        'time': None, 
-        'speed': None, 
-        'units': 'kg',
-        'feeling': 3,
+        'workout_date': '2025-03-27', 'exercise_name': 'A', 'order_number': 1, 'feeling': 3,
+        'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
     }
     ws2 = {
-        'workout_date': '2025-03-27', 
-        'exercise_name': 'B', 
-        'order_number': 2, 
-        'sets': 3, 
-        'weight': 45, 
-        'repetitions': 10, 
-        'time': None, 
-        'speed': None, 
-        'units': 'kg',
-        'feeling': 3,
+        'workout_date': '2025-03-27', 'exercise_name': 'B', 'order_number': 2, 'feeling': 3,
+        'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
     }
 
     def test_create(self):
@@ -49,7 +33,6 @@ class TestDatabase:
 
         db.add_exercise(**exercise1)
         db.add_exercise(**exercise2)
-        assert db
 
         for exercise in [exercise3, exercise4]:
             with pytest.raises(sqlite3.IntegrityError):
@@ -63,7 +46,6 @@ class TestDatabase:
 
         db.add_exercise(self.ws1['exercise_name'])
         db.add_workout(**self.ws1)
-        assert db
 
         with pytest.raises(ValueError):
             db.add_workout(**self.ws2)
