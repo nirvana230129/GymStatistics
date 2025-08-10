@@ -97,7 +97,7 @@ class Database:
         if exercise_id is None:
             raise ValueError(f'There is no "{exercise_name}" exercise')
 
-        self._cursor.execute('SELECT * FROM WorkoutSessions WHERE date = ? AND exercise_id = ?;', 
+        self._cursor.execute("SELECT * FROM WorkoutSessions WHERE date = ? AND exercise_id = ?;", 
                              (workout_date, exercise_id))
         return self._cursor.fetchone()
 
@@ -119,7 +119,7 @@ class Database:
         """
         Prints all data in the database.
         """
-        self._cursor.execute(f'SELECT * FROM {self._table_name};')
+        self._cursor.execute("SELECT * FROM WorkoutSessions WS JOIN Exercises E ON WS.exercise_id = E.id;")
         return self._cursor.fetchall()
 
     def plot_weights(self, exercise_name: str):

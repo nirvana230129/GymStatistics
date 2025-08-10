@@ -143,7 +143,7 @@ class WorkoutSessionsTable(Table):
         """
         Creates the table.
         """
-        self._cursor.execute('''
+        self._cursor.execute("""--sql
             CREATE TABLE IF NOT EXISTS WorkoutSessions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date DATE NOT NULL,
@@ -157,7 +157,7 @@ class WorkoutSessionsTable(Table):
                 units TEXT CHECK(units IN ('kg', 'lbs', 'kph', 'mph') OR units IS NULL),
                 feeling INTEGER CHECK(feeling BETWEEN 1 AND 5),
                 local_order INTEGER CHECK(local_order >= 0 AND local_order < sets),
-                
+
                 CHECK(
                     (weight IS NOT NULL AND repetitions IS NOT NULL)
                     OR
@@ -166,7 +166,7 @@ class WorkoutSessionsTable(Table):
                 UNIQUE(date, order_number),
                 FOREIGN KEY (exercise_id) REFERENCES Exercises(id)
             );
-        ''')
+        """)
 
     def add_workout(self, workout: Workout) -> None:
         """
@@ -174,11 +174,11 @@ class WorkoutSessionsTable(Table):
         :param workout: workout to add.
         """
         for w in workout.convert2list():
-            self._cursor.execute(f'''
-                INSERT INTO WorkoutSessions 
+            self._cursor.execute("""--sql
+                INSERT INTO WorkoutSessions
                 (date, exercise_id, order_number, sets, weight, repetitions, time, speed, units, feeling, local_order)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            ''', (w.workout_date, w.exercise_id, w.order_number, w.sets, w.weight, w.repetitions, w.time, w.speed, w.units, w.feeling, w.local_order)
+            """, (w.workout_date, w.exercise_id, w.order_number, w.sets, w.weight, w.repetitions, w.time, w.speed, w.units, w.feeling, w.local_order)
             )
 
     def add_workout_session(self, workout_sessions: list[Workout]) -> None:
