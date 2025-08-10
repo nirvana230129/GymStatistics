@@ -99,9 +99,7 @@ class Database:
 
         self._cursor.execute('SELECT * FROM WorkoutSessions WHERE date = ? AND exercise_id = ?;', 
                              (workout_date, exercise_id))
-        data = self._cursor.fetchone()
-        print(data)
-        return data
+        return self._cursor.fetchone()
 
     def get_all_exercises(self) -> list[str]:
         """
@@ -124,10 +122,8 @@ class Database:
         self._cursor.execute(f'SELECT * FROM {self._table_name};')
         return self._cursor.fetchall()
 
-
     def plot_weights(self, exercise_name: str):
         """
         Plots the weight progression for the given exercise.
         :param exercise_name: name of the exercise.
         """
-        pass
