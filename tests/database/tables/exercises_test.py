@@ -29,7 +29,7 @@ class TestExercises:
     
     def test_add_exercise(self, db_connection, db_cursor):
         table = ExercisesTable(db_connection, db_cursor)
-        table.drop()
+        table.clear()
         table.create()
 
         table.add_exercise(**self.exercise1)
@@ -42,7 +42,7 @@ class TestExercises:
     
     def test_get_exercise_id(self, db_connection, db_cursor):
         table = ExercisesTable(db_connection, db_cursor)
-        table.drop()
+        table.clear()
         table.create()
 
         table.add_exercise(**self.exercise1)

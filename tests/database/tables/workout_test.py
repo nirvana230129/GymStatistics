@@ -163,7 +163,7 @@ class TestWorkoutSessions:
     
     def test_add_workout(self, db_connection, db_cursor):
         table = WorkoutSessionsTable(db_connection, db_cursor)
-        table.drop()
+        table.clear()
         table.create()
 
         table.add_workout(self.speed1)
@@ -175,7 +175,7 @@ class TestWorkoutSessions:
     
     def test_add_workout_session(self, db_connection, db_cursor):
         table = WorkoutSessionsTable(db_connection, db_cursor)
-        table.drop()
+        table.clear()
         table.create()
 
         table.add_workout_session([self.speed1, self.weight2])

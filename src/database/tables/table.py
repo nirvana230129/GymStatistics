@@ -18,11 +18,11 @@ class Table(ABC):
         self._cursor = cursor
         self._table_name = table_name
 
-    def drop(self) -> None:
+    def clear(self) -> None:
         """
-        Deletes the table.
+        Clears the table.
         """
-        self._cursor.execute(f'DROP TABLE IF EXISTS {self._table_name};')
+        self._cursor.execute(f'DELETE FROM {self._table_name};')
 
     @abstractmethod
     def create(self) -> None:
