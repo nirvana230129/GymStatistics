@@ -7,13 +7,12 @@ class ExercisesTable(Table):
     This class is responsible for working with the Exercises table.
     """
 
-    def __init__(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
+    def __init__(self, cursor: sqlite3.Cursor) -> None:
         """
         Connects to the database.
-        :param connection: connection to the database.
         :param cursor: cursor to the database.
         """
-        super().__init__('Exercises', connection, cursor)
+        super().__init__('Exercises', cursor)
 
     def create(self) -> None:
         """
@@ -39,6 +38,7 @@ class ExercisesTable(Table):
             INSERT INTO Exercises (name, alias, target_muscle_group)
             VALUES (?, ?, ?);
         """, (exercise_name, alias, target_muscle_group))
+        return self._cursor.lastrowid
 
     def get_exercise_id(self, exercise_name: str, may_be_alias: bool = False) -> int | None:
         """

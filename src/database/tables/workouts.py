@@ -9,9 +9,7 @@ class Workout:
     """
 
     def __init__(self, 
-                 workout_date: date, 
-                 exercise_id: str, 
-                 order_number: int, 
+                 schedule_id: str, 
                  sets: int, 
                  weight: float | list[float] = None, 
                  repetitions: int | list[int] = None, 
@@ -19,12 +17,10 @@ class Workout:
                  speed: float | list[float] = None, 
                  units: str = None,
                  feeling: int = None,
-                 local_order: int = None) -> None:
+                 local_order: int = -1) -> None:
         """
         Initializes a workout. Either weight and repetitions (for exercises with machines or additional equipment) or time and speed (for cardio exercises) must be provided.
-        :param workout_date: date of the workout.
-        :param exercise_id: ID of the exercise.
-        :param order_number: order number of the exercise in the workout.
+        :param schedule_id: ID of the record in the Schedule table (id, date, exercise_id, order_number).
         :param sets: number of sets (for cardio exercises sets are parts with constant speed).
         :param weight: weight that was used during the workout (in machine or in equipment). If it is a list, it means that the weight was different for each set.
         :param repetitions: number of repetitions. If it is a list, it means that the number of repetitions was different for each set.
@@ -63,8 +59,7 @@ class Workout:
                 raise ValueError('The number of times must be equal to the number of sets')
             if isinstance(speed, list) and len(speed) != sets:
                 raise ValueError('The number of speeds must be equal to the number of sets')
-            if not isinstance(time, list) and local_order is None and sets > 1:
-                print(time, sets)
+            if not isinstance(time, list) and local_order == -1 and sets > 1:
                 raise ValueError('For cardio exercises, if sets > 1, the record must contain information about each of them')
             weight = None
             repetitions = None
@@ -72,9 +67,7 @@ class Workout:
 
         self._is_list = isinstance(weight, list) or isinstance(speed, list)
 
-        self.workout_date = workout_date
-        self.exercise_id = exercise_id
-        self.order_number = order_number
+        self.schedule_id = schedule_id
         self.sets = sets
         self.weight = weight
         self.repetitions = repetitions
@@ -94,9 +87,7 @@ class Workout:
         ans = []
         for i in range(self.sets):
             ans.append(Workout(
-                workout_date=self.workout_date, 
-                exercise_id=self.exercise_id, 
-                order_number=self.order_number,
+                schedule_id=self.schedule_id, 
                 sets=self.sets, 
                 weight=self.weight[i] if self._weight_or_speed == 0 else self.weight, 
                 repetitions=self.repetitions[i] if self._weight_or_speed == 0 and isinstance(self.repetitions, list) else self.repetitions, 
@@ -113,9 +104,7 @@ class Workout:
         Returns a string representation of the workout session.
         """
         return '{\n'\
-               f'\tworkout_date: {self.workout_date},\n'\
-               f'\texercise_id: {self.exercise_id},\n'\
-               f'\torder_number: {self.order_number},\n'\
+               f'\tschedule_id: {self.schedule_id},\n'\
                f'\tsets: {self.sets},\n'\
                f'\tweight: {self.weight},\n'\
                f'\trepetitions: {self.repetitions},\n'\
@@ -128,45 +117,41 @@ class Workout:
 
 
 
-class WorkoutSessionsTable(Table):
+class WorkoutsTable(Table):
     """
-    This class is responsible for working with the WorkoutSessions table. Workout session describes full workout in the gym.
+    This class is responsible for working with the WorkoutsTable table. Workout session describes doing of one exercise.
     """
 
-    def __init__(self, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
+    def __init__(self, cursor: sqlite3.Cursor) -> None:
         """
         Connects to the database.
-        :param connection: connection to the database.
         :param cursor: cursor to the database.
         """
-        super().__init__('WorkoutSessions', connection, cursor)
+        super().__init__('Workouts', cursor)
 
     def create(self) -> None:
         """
         Creates the table.
         """
         self._cursor.execute("""--sql
-            CREATE TABLE IF NOT EXISTS WorkoutSessions (
+            CREATE TABLE IF NOT EXISTS Workouts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date DATE NOT NULL,
-                exercise_id INTEGER NOT NULL,
-                order_number INTEGER NOT NULL,
+                schedule_id INTEGER NOT NULL,
+                feeling INTEGER CHECK(feeling BETWEEN 1 AND 5),
+                local_order INTEGER CHECK(local_order >= -1 AND local_order < sets),
                 sets INTEGER CHECK(sets > 0),
                 weight REAL,
                 repetitions INTEGER CHECK(repetitions > 0),
                 time INTEGER CHECK(time > 0),
                 speed REAL CHECK(speed > 0),
                 units TEXT CHECK(units IN ('kg', 'lbs', 'kph', 'mph') OR units IS NULL),
-                feeling INTEGER CHECK(feeling BETWEEN 1 AND 5),
-                local_order INTEGER CHECK(local_order >= 0 AND local_order < sets),
-
                 CHECK(
                     (weight IS NOT NULL AND repetitions IS NOT NULL)
                     OR
                     (time IS NOT NULL AND speed IS NOT NULL)
                 ),
-                UNIQUE(date, order_number, local_order),
-                FOREIGN KEY (exercise_id) REFERENCES Exercises(id)
+                UNIQUE(schedule_id, local_order),
+                FOREIGN KEY (schedule_id) REFERENCES Schedule(id)
             );
         """)
 
@@ -177,16 +162,8 @@ class WorkoutSessionsTable(Table):
         """
         for w in workout.convert2list():
             self._cursor.execute("""--sql
-                INSERT INTO WorkoutSessions
-                (date, exercise_id, order_number, sets, weight, repetitions, time, speed, units, feeling, local_order)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
-            """, (w.workout_date, w.exercise_id, w.order_number, w.sets, w.weight, w.repetitions, w.time, w.speed, w.units, w.feeling, w.local_order)
-            )
-
-    def add_workout_session(self, workout_sessions: list[Workout]) -> None:
-        """
-        Adds a new workout session to the table.
-        :param workout_sessions: list of workout sessions to add.
-        """
-        for workout_session in workout_sessions:
-            self.add_workout(workout_session)
+                INSERT INTO Workouts
+                (schedule_id, feeling, local_order, sets, weight, repetitions, time, speed, units)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """, (w.schedule_id, w.feeling, w.local_order, w.sets, w.weight, w.repetitions, w.time, w.speed, w.units))
+        return self._cursor.lastrowid

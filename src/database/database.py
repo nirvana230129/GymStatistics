@@ -1,7 +1,8 @@
 import sqlite3
 from datetime import date
 from .tables.exercises import ExercisesTable
-from .tables.workout_sessions import Workout, WorkoutSessionsTable
+from .tables.workouts import Workout, WorkoutsTable
+from .tables.schedule import ScheduleTable
 
 
 class Database:
@@ -16,15 +17,17 @@ class Database:
         """
         self._connection = sqlite3.connect(db_file)
         self._cursor = self._connection.cursor()
-        self._exercises_table = ExercisesTable(self._connection, self._cursor)
-        self._workout_sessions_table = WorkoutSessionsTable(self._connection, self._cursor)
+        self._exercises_table = ExercisesTable(self._cursor)
+        self._workouts_table = WorkoutsTable(self._cursor)
+        self._schedule_table = ScheduleTable(self._cursor)
 
     def clear(self) -> None:
         """
         Clears all tables of the database.
         """
         self._exercises_table.clear()
-        self._workout_sessions_table.clear()
+        self._workouts_table.clear()
+        self._schedule_table.clear()
         self.commit()
 
     def create(self) -> None:
@@ -32,9 +35,11 @@ class Database:
         Creates 'WorkoutSessions' and 'Exercises' tables.
         """
         self._exercises_table.drop()
-        self._workout_sessions_table.drop()
+        self._workouts_table.drop()
+        self._schedule_table.drop()
         self._exercises_table.create()
-        self._workout_sessions_table.create()
+        self._workouts_table.create()
+        self._schedule_table.create()
         self.commit()
 
     def commit(self) -> None:
@@ -76,8 +81,7 @@ class Database:
         :param exercise_name: name of the exercise.
         :param order_number: order number of the exercise in the workout.
         :param sets: number of sets (for cardio exercises sets are parts with constant speed).
-        :param weight: weight that was used during the workout (in machine or in equipment). If it is a list, it means that the weight 
-        was different for each set.
+        :param weight: weight that was used during the workout (in machine or in equipment). If it is a list, it means that the weight was different for each set.
         :param repetitions: number of repetitions. If it is a list, it means that the number of repetitions was different for each set.
         :param time: time in seconds. If it is a list, it means that the time was different for each set.
         :param speed: if it is a list, it means that the speed varied during the exercise.
@@ -87,9 +91,10 @@ class Database:
         exercise_id = self._exercises_table.get_exercise_id(exercise_name, may_be_alias=True)
         if exercise_id is None:
             raise ValueError(f'There is no "{exercise_name}" exercise')
-
-        workout = Workout(workout_date, exercise_id, order_number, sets, weight, repetitions, time, speed, units, feeling)
-        self._workout_sessions_table.add_workout(workout)
+        
+        schedule_id = self._schedule_table.add_schedule_record(workout_date, exercise_id, order_number)
+        workout = Workout(schedule_id, sets, weight, repetitions, time, speed, units, feeling)
+        self._workouts_table.add_workout(workout)
         self.commit()
 
     def find_workout(self, workout_date: date, exercise_name: str) -> tuple | None:
@@ -103,9 +108,13 @@ class Database:
         if exercise_id is None:
             raise ValueError(f'There is no "{exercise_name}" exercise')
 
-        self._cursor.execute("SELECT * FROM WorkoutSessions WHERE date = ? AND exercise_id = ?;", 
-                             (workout_date, exercise_id))
-        return self._cursor.fetchone()
+        self._cursor.execute("""--sql
+            SELECT S.id, S.date, S.exercise_id, S.order_number, W.id, W.feeling, W.local_order, W.sets, W.weight, W.repetitions, W.time, W.speed, W.units
+            FROM Schedule S
+            JOIN Workouts W ON S.id = W.schedule_id
+            WHERE S.date = ? AND S.exercise_id = ?;
+        """, (workout_date, exercise_id))
+        return self._cursor.fetchall()
 
     def get_all_exercises(self) -> list[str]:
         """
@@ -114,18 +123,30 @@ class Database:
         """
         return self._exercises_table.get_all_data()
     
-    def get_all_workout_sessions(self) -> list[str]:
+    def get_all_schedule(self) -> list[str]:
+        """
+        Gets all schedule records.
+        :return: list of all schedule records.
+        """
+        return self._schedule_table.get_all_data()
+
+    def get_all_workouts(self) -> list[str]:
         """
         Gets all exercises.
-        :return: list of all exercises.
+        :return: list of all workouts.
         """
-        return self._workout_sessions_table.get_all_data()
+        return self._workouts_table.get_all_data()
 
     def get_all_data(self) -> None:
         """
         Prints all data in the database.
         """
-        self._cursor.execute("SELECT * FROM WorkoutSessions WS JOIN Exercises E ON WS.exercise_id = E.id;")
+        self._cursor.execute("""--sql
+            SELECT *
+            FROM Workouts W
+            JOIN Schedule S ON W.schedule_id = S.id
+            JOIN Exercises E ON S.exercise_id = E.id;
+        """)
         return self._cursor.fetchall()
 
     def plot_weights(self, exercise_name: str):

@@ -27,14 +27,16 @@ class TestDatabase:
         db.clear()
 
         exercise1 = {'exercise_name': 'A', 'alias': 'a', 'target_muscle_group': 'z'}
-        exercise2 = {'exercise_name': 'B', 'alias': 'b', 'target_muscle_group': ''}
-        exercise3 = {'exercise_name': 'A', 'alias': 'c', 'target_muscle_group': 'z'}
-        exercise4 = {'exercise_name': 'C', 'alias': 'a', 'target_muscle_group': ''}
+        exercise2 = {'exercise_name': 'B', 'alias': 'b'}
+        exercise3 = {'exercise_name': 'C'}
+        exercise4 = {'exercise_name': 'A', 'alias': 'c', 'target_muscle_group': 'z'}
+        exercise5 = {'exercise_name': 'C', 'alias': 'a'}
+        exercise6 = {'exercise_name': 'C'}
 
-        db.add_exercise(**exercise1)
-        db.add_exercise(**exercise2)
+        for x in [exercise1, exercise2, exercise3]:
+            db.add_exercise(**x)
 
-        for exercise in [exercise3, exercise4]:
+        for exercise in [exercise4, exercise5, exercise6]:
             with pytest.raises(sqlite3.IntegrityError):
                 db.add_exercise(**exercise)
         db.close()
@@ -60,9 +62,9 @@ class TestDatabase:
         db.add_exercise('B')
         db.add_workout(**self.ws1)
 
-        assert (db.find_workout(self.ws1['workout_date'], self.ws1['exercise_name']) == (1, '2025-03-27', 1, 1, 3, 45.0, 10, None, None, 'kg', 3, None))
-        assert db.find_workout('2000-01-01', 'B') == None
-        assert db.find_workout(self.ws1['workout_date'], 'B') == None
+        assert db.find_workout(self.ws1['workout_date'], self.ws1['exercise_name']) == [(1, '2025-03-27', 1, 1, 1, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        assert db.find_workout('2000-01-01', 'B') == []
+        assert db.find_workout(self.ws1['workout_date'], 'B') == []
         
         with pytest.raises(ValueError):
             db.find_workout(self.ws1['workout_date'], 'C')

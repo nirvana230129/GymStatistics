@@ -7,14 +7,12 @@ class Table(ABC):
     Table class is the interface for working with tables.
     """
 
-    def __init__(self, table_name: str, connection: sqlite3.Connection, cursor: sqlite3.Cursor) -> None:
+    def __init__(self, table_name: str, cursor: sqlite3.Cursor) -> None:
         """
         Connects to the database.
         :param table_name: name of the table.
-        :param connection: connection to the database.
         :param cursor: cursor to the database.
         """
-        self._connection = connection
         self._cursor = cursor
         self.table_name = table_name
 
@@ -36,12 +34,6 @@ class Table(ABC):
         Clears the table.
         """
         self._cursor.execute(f'DELETE FROM {self.table_name};')
-
-    def commit(self) -> None:
-        """
-        Commits the changes to the database.
-        """
-        self._connection.commit()
 
     def get_all_data(self) -> list[tuple]:
         """

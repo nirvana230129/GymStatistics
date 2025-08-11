@@ -22,13 +22,13 @@ class TestExercises:
     exercise3 = {'exercise_name': 'A', 'alias': 'c', 'target_muscle_group': 'z'}
     exercise4 = {'exercise_name': 'C', 'alias': 'a', 'target_muscle_group': ''}
 
-    def test_create(self, db_connection, db_cursor):
-        table = ExercisesTable(db_connection, db_cursor)
+    def test_create(self, db_cursor):
+        table = ExercisesTable(db_cursor)
         table.create()
         assert table
     
-    def test_add_exercise(self, db_connection, db_cursor):
-        table = ExercisesTable(db_connection, db_cursor)
+    def test_add_exercise(self, db_cursor):
+        table = ExercisesTable(db_cursor)
         table.drop()
         table.create()
 
@@ -39,8 +39,8 @@ class TestExercises:
             with pytest.raises(sqlite3.IntegrityError):
                 table.add_exercise(**exercise)
     
-    def test_get_exercise_id(self, db_connection, db_cursor):
-        table = ExercisesTable(db_connection, db_cursor)
+    def test_get_exercise_id(self, db_cursor):
+        table = ExercisesTable(db_cursor)
         table.drop()
         table.create()
 

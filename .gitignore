@@ -1,5 +1,5 @@
 .*
-
+scheme
 *.db
 *.sqlite
 __* 
