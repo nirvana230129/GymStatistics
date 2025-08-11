@@ -19,7 +19,7 @@ class Workout:
                  speed: float | list[float] = None, 
                  units: str = None,
                  feeling: int = None,
-                 local_order: int = 0) -> None:
+                 local_order: int = None) -> None:
         """
         Initializes a workout. Either weight and repetitions (for exercises with machines or additional equipment) or time and speed (for cardio exercises) must be provided.
         :param workout_date: date of the workout.
@@ -32,7 +32,7 @@ class Workout:
         :param speed: if it is a list, it means that the speed varied during the exercise.
         :param units: the units of weight on the machine, the weight of an equipment, or the speed (kg/lbs or kph/mph).
         :param feeling: feeling rating (from 1 to 5).
-        :param local_order: local order of the workout in the workout session.
+        :param local_order: number of the current set if there are different values for each set.
         """
         if weight is not None and repetitions is not None:
             self._weight_or_speed = 0
@@ -57,12 +57,14 @@ class Workout:
             time = None
             speed = None
         else:
+            if isinstance(time, list) ^ isinstance(speed, list):
+                raise ValueError('Either all time and speed must be lists or none of them must be lists')
             if isinstance(time, list) and len(time) != sets:
                 raise ValueError('The number of times must be equal to the number of sets')
             if isinstance(speed, list) and len(speed) != sets:
                 raise ValueError('The number of speeds must be equal to the number of sets')
-            if isinstance(time, list) ^ isinstance(speed, list):
-                raise ValueError('Either all time and speed must be lists or none of them must be lists')
+            if not isinstance(time, list) and sets > 1:
+                raise ValueError('For cardio exercises, if sets > 1, the record must contain information about each of them')
             weight = None
             repetitions = None
 
@@ -79,7 +81,6 @@ class Workout:
         self.speed = speed
         self.units = units
         self.feeling = feeling
-
         self.local_order = local_order
 
     def convert2list(self) -> list['Workout']:
@@ -102,7 +103,7 @@ class Workout:
                 speed=self.speed[i] if self._weight_or_speed == 1 else self.speed, 
                 units=self.units, 
                 feeling=self.feeling,
-                local_order=self.local_order + i
+                local_order=i
             ))
         return ans
 

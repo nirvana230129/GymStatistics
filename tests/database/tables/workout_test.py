@@ -11,7 +11,7 @@ class TestWorkout:
 
     speed_example = {
         'workout_date': '2025-03-27', 'exercise_id': 9999, 'order_number': 1, 'feeling': 3,
-        'sets': 3, 'time': 600, 'speed': 8.5, 'units': 'kph',
+        'sets': 1, 'time': 600, 'speed': 8.5, 'units': 'kph',
     }
 
     def test_feeling(self):
@@ -51,42 +51,44 @@ class TestWorkout:
                 Workout(**example)
 
     def test_type_combinations_weight(self):
-        assert Workout('2025-03-27', 9999, 1, 3, 45, 10)
-        assert Workout('2025-03-27', 9999, 1, 3, 45, [5, 7, 9])
-        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], 10)
-        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7, 9])
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=45,           repetitions=10)
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=45,           repetitions=[5, 7, 9])
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=[41, 42, 43], repetitions=10)
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=[41, 42, 43], repetitions=[5, 7, 9])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, 45, [5, 7])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=45,           repetitions=[5, 7])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42], 10)
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=[41, 42],     repetitions=10)
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42], [5, 7])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=[41, 42],     repetitions=[5, 7])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42], [5, 7, 9])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=[41, 42],     repetitions=[5, 7, 9])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, weight=[41, 42, 43], repetitions=[5, 7])
 
     def test_type_combinations_speed(self):
-        assert Workout('2025-03-27', 9999, 1, 3, None, None, 600, 8.5)
-        assert Workout('2025-03-27', 9999, 1, 3, None, None, [100, 200, 300], [5, 6.5, 5])
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=1, time=600,             speed=8.5)
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[100, 200, 300], speed=[5, 6.5, 5])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, 600, [5, 6.5, 5])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=600,             speed=5)
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, [100, 200, 300], 8.5)
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=600,             speed=[5, 6.5, 5])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, 600, [5, 6.5])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[100, 200, 300], speed=8.5)
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, [100, 200, 300], [5, 6.5])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=600,             speed=[5, 6.5])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, [100, 200], 8.5)
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[100, 200, 300], speed=[5, 6.5])
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, [100, 200], [5, 6.5, 5])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[100, 200],      speed=8.5)
         with pytest.raises(ValueError):
-            Workout('2025-03-27', 9999, 1, 3, None, None, [100, 200], [5, 6.5])
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[100, 200],      speed=[5, 6.5, 5])
+        with pytest.raises(ValueError):
+            Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[100, 200],      speed=[5, 6.5])
     
     def test_type_combinations_mixed(self):
-        assert Workout('2025-03-27', 9999, 1, 3, 45, 10, 600, 8.5)
-        assert Workout('2025-03-27', 9999, 1, 3, [41, 42, 43], [5, 7, 9], [100, 200, 300], [5, 6.5, 5])
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=1, time=45,           speed=10,        weight=600,             repetitions=8.5)
+        assert Workout(workout_date='2025-03-27', exercise_id=9999, order_number=1, sets=3, time=[41, 42, 43], speed=[5, 7, 9], weight=[100, 200, 300], repetitions=[5, 6.5, 5])
 
 
 @pytest.fixture
@@ -113,7 +115,7 @@ class TestWorkoutSessions:
     )
     speed1 = Workout(
         workout_date='2025-03-27', exercise_id=9999, order_number=1, feeling=3,
-        sets=3, time=600, speed=8.5, units='kph',
+        sets=1, time=600, speed=8.5, units='kph',
     )
 
     def test_create(self, db_connection, db_cursor):

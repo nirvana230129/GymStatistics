@@ -60,8 +60,7 @@ class TestDatabase:
         db.add_exercise('B')
         db.add_workout(**self.ws1)
 
-        assert db.find_workout(self.ws1['workout_date'], self.ws1['exercise_name']) == \
-            (1, '2025-03-27', 1, 1, 3, 45.0, 10, None, None, 'kg', 3, 0)
+        assert (db.find_workout(self.ws1['workout_date'], self.ws1['exercise_name']) == (1, '2025-03-27', 1, 1, 3, 45.0, 10, None, None, 'kg', 3, None))
         assert db.find_workout('2000-01-01', 'B') == None
         assert db.find_workout(self.ws1['workout_date'], 'B') == None
         
