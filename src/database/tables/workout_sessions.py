@@ -63,7 +63,8 @@ class Workout:
                 raise ValueError('The number of times must be equal to the number of sets')
             if isinstance(speed, list) and len(speed) != sets:
                 raise ValueError('The number of speeds must be equal to the number of sets')
-            if not isinstance(time, list) and sets > 1:
+            if not isinstance(time, list) and local_order is None and sets > 1:
+                print(time, sets)
                 raise ValueError('For cardio exercises, if sets > 1, the record must contain information about each of them')
             weight = None
             repetitions = None
@@ -96,7 +97,7 @@ class Workout:
                 workout_date=self.workout_date, 
                 exercise_id=self.exercise_id, 
                 order_number=self.order_number,
-                sets=1, 
+                sets=self.sets, 
                 weight=self.weight[i] if self._weight_or_speed == 0 else self.weight, 
                 repetitions=self.repetitions[i] if self._weight_or_speed == 0 and isinstance(self.repetitions, list) else self.repetitions, 
                 time=self.time[i] if self._weight_or_speed == 1 else self.time, 
@@ -123,7 +124,7 @@ class Workout:
                f'\tunits: {self.units},\n'\
                f'\tfeeling: {self.feeling},\n'\
                f'\tlocal_order: {self.local_order}'\
-                '}\n'
+                '\n}'
 
 
 
@@ -164,7 +165,7 @@ class WorkoutSessionsTable(Table):
                     OR
                     (time IS NOT NULL AND speed IS NOT NULL)
                 ),
-                UNIQUE(date, order_number),
+                UNIQUE(date, order_number, local_order),
                 FOREIGN KEY (exercise_id) REFERENCES Exercises(id)
             );
         """)
