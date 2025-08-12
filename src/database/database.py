@@ -1,9 +1,10 @@
 import sqlite3
-from datetime import date
+from datetime import date, datetime
 from .tables.exercises import ExercisesTable
 from .tables.workouts import Workout, WorkoutsTable
 from .tables.schedule import ScheduleTable
-
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
 
 class Database:
     """
@@ -154,4 +155,36 @@ class Database:
         Plots the weight progression for the given exercise.
         :param exercise_name: name of the exercise.
         """
-        pass
+        self._cursor.execute("""--sql
+            SELECT S.date, W.weight
+            FROM Workouts W
+            JOIN Schedule S ON W.schedule_id = S.id
+            JOIN Exercises E ON S.exercise_id = E.id
+            WHERE E.name = ?
+        """, (exercise_name,))
+
+        date_weight = {}
+        for d, w in self._cursor.fetchall():
+            if d not in date_weight:
+                date_weight[d] = []
+            date_weight[d].append(w)
+
+        dates = []
+        weights = []
+        for date in date_weight:
+            dates.append(datetime.strptime(date, '%Y-%m-%d'))
+            w = date_weight[date]
+            weights.append(sum(w) / len(w))
+
+        plt.figure(figsize=(8, 5))
+        plt.plot(dates, weights, marker='o')
+
+        plt.gca().xaxis.set_major_formatter(DateFormatter('%Y-%m-%d'))
+        plt.xticks(dates)
+
+        plt.xlabel('Date')
+        plt.ylabel('Weight')
+        plt.title(f'{exercise_name} weight progression')
+
+        plt.grid(True)
+        plt.show()

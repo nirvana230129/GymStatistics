@@ -65,7 +65,7 @@ class Workout:
             repetitions = None
 
 
-        self._is_list = isinstance(weight, list) or isinstance(speed, list)
+        self._is_list = isinstance(weight, list) or isinstance(repetitions, list) or isinstance(speed, list)
 
         self.schedule_id = schedule_id
         self.sets = sets
@@ -89,7 +89,7 @@ class Workout:
             ans.append(Workout(
                 schedule_id=self.schedule_id, 
                 sets=self.sets, 
-                weight=self.weight[i] if self._weight_or_speed == 0 else self.weight, 
+                weight=self.weight[i] if self._weight_or_speed == 0 and isinstance(self.weight, list) else self.weight, 
                 repetitions=self.repetitions[i] if self._weight_or_speed == 0 and isinstance(self.repetitions, list) else self.repetitions, 
                 time=self.time[i] if self._weight_or_speed == 1 else self.time, 
                 speed=self.speed[i] if self._weight_or_speed == 1 else self.speed, 
@@ -161,6 +161,7 @@ class WorkoutsTable(Table):
         :param workout: workout to add.
         """
         for w in workout.convert2list():
+            print(w)
             self._cursor.execute("""--sql
                 INSERT INTO Workouts
                 (schedule_id, feeling, local_order, sets, weight, repetitions, time, speed, units)
