@@ -3,3 +3,7 @@ scheme
 *.db
 *.sqlite
 __* 
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
