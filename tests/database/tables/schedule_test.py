@@ -45,3 +45,74 @@ class TestScheduleTable:
         ]:
             with pytest.raises(sqlite3.IntegrityError):
                 table.add_schedule_record(date, id, order_num)
+
+    def test_delete_schedule_record(self, db_cursor):
+        exercises = ExercisesTable(db_cursor)
+        exercises.drop()
+        exercises.create()
+        id1 = exercises.add_exercise('A')
+        id2 = exercises.add_exercise('B')
+
+        table = ScheduleTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_schedule_record('2024-01-01', id1, 1)
+        table.add_schedule_record('2024-01-01', id2, 2)
+        table.add_schedule_record('2024-01-02', id1, 1)
+
+        assert table.get_all_data() == [(1, '2024-01-01', 1, 1), (2, '2024-01-01', 2, 2), (3, '2024-01-02', 1, 1)]
+
+        table.delete_by_id(1)
+        assert table.get_all_data() == [(2, '2024-01-01', 2, 2), (3, '2024-01-02', 1, 1)]
+
+        table.delete_by_id(1)
+        assert table.get_all_data() == [(2, '2024-01-01', 2, 2), (3, '2024-01-02', 1, 1)]
+
+    def test_delete_schedule_by_date(self, db_cursor):
+        exercises = ExercisesTable(db_cursor)
+        exercises.drop()
+        exercises.create()
+        id1 = exercises.add_exercise('A')
+        id2 = exercises.add_exercise('B')
+
+        table = ScheduleTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_schedule_record('2024-01-01', id1, 1)
+        table.add_schedule_record('2024-01-01', id2, 2)
+        table.add_schedule_record('2024-01-02', id1, 1)
+
+        assert table.get_all_data() == [(1, '2024-01-01', 1, 1), (2, '2024-01-01', 2, 2), (3, '2024-01-02', 1, 1)]
+
+        table.delete_schedule_by_date('2024-01-01')
+        assert table.get_all_data() == [(3, '2024-01-02', 1, 1)]
+
+        table.delete_schedule_by_date('2024-01-01')
+        assert table.get_all_data() == [(3, '2024-01-02', 1, 1)]
+    
+    def test_delete_schedule_by_exercise(self, db_cursor):
+        exercises = ExercisesTable(db_cursor)
+        exercises.drop()
+        exercises.create()
+        id1 = exercises.add_exercise('A')
+        id2 = exercises.add_exercise('B')
+
+        table = ScheduleTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_schedule_record('2024-01-01', id1, 1)
+        table.add_schedule_record('2024-01-01', id2, 2)
+        table.add_schedule_record('2024-01-02', id1, 1)
+
+        assert table.get_all_data() == [(1, '2024-01-01', 1, 1), (2, '2024-01-01', 2, 2), (3, '2024-01-02', 1, 1)]
+
+        table.delete_schedule_by_exercise(1)
+        assert table.get_all_data() == [(2, '2024-01-01', 2, 2)]
+
+        table.delete_schedule_by_exercise(1)
+        assert table.get_all_data() == [(2, '2024-01-01', 2, 2)]
+    
+    

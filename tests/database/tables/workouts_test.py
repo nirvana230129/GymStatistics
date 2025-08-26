@@ -110,3 +110,50 @@ class TestWorkouts:
         with pytest.raises(sqlite3.IntegrityError):
             table.add_workout(self.weight1)
     
+    def test_delete_workout(self, db_cursor):
+        table = WorkoutsTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_workout(self.speed1)
+        table.add_workout(self.weight2)
+
+        assert table.get_all_data() == [(1, 2, 3, -1, 1, None, None, 1, 1.0, 'kph'), (2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+        table.delete_by_id(1)
+        assert table.get_all_data() == [(2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+        table.delete_by_id(1)
+        assert table.get_all_data() == [(2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+    def test_delete_workouts_by_schedule(self, db_cursor):
+        table = WorkoutsTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_workout(self.speed1)
+        table.add_workout(self.weight2)
+
+        assert table.get_all_data() == [(1, 2, 3, -1, 1, None, None, 1, 1.0, 'kph'), (2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+        table.delete_workouts_by_schedule(2)
+        assert table.get_all_data() == [(2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+        table.delete_workouts_by_schedule(2)
+        assert table.get_all_data() == [(2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+    def test_delete_workouts_by_date(self, db_cursor):
+        table = WorkoutsTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_workout(self.speed1)
+        table.add_workout(self.weight2)
+
+        assert table.get_all_data() == [(1, 2, 3, -1, 1, None, None, 1, 1.0, 'kph'), (2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+        table.delete_workouts_by_schedule(2)
+        assert table.get_all_data() == [(2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]
+
+        table.delete_workouts_by_schedule(2)
+        assert table.get_all_data() == [(2, 1, 3, -1, 3, 1.0, 1, None, None, 'kg')]

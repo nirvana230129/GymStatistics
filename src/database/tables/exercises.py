@@ -39,7 +39,7 @@ class ExercisesTable(Table):
             VALUES (?, ?, ?);
         """, (exercise_name, alias, target_muscle_group))
         return self._cursor.lastrowid
-
+    
     def get_exercise_id(self, exercise_name: str, may_be_alias: bool = False) -> int | None:
         """
         Finds an exercise with the given name.

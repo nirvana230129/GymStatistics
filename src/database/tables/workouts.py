@@ -161,10 +161,31 @@ class WorkoutsTable(Table):
         :param workout: workout to add.
         """
         for w in workout.convert2list():
-            print(w)
             self._cursor.execute("""--sql
                 INSERT INTO Workouts
                 (schedule_id, feeling, local_order, sets, weight, repetitions, time, speed, units)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
             """, (w.schedule_id, w.feeling, w.local_order, w.sets, w.weight, w.repetitions, w.time, w.speed, w.units))
         return self._cursor.lastrowid
+    
+    def delete_workouts_by_schedule(self, schedule_id: int) -> None:
+        """
+        Deletes all workouts for the given schedule record.
+        :param schedule_id: ID of the schedule record.
+        """
+        self._cursor.execute("""--sql
+            DELETE FROM Workouts
+            WHERE schedule_id = ?;
+        """, (schedule_id,))
+
+    # def delete_workouts_by_date(self, workout_date: date) -> None:
+    #     """
+    #     Deletes all workouts for the given date.
+    #     :param workout_date: date of the workout to delete.
+    #     """
+    #     self._cursor.execute("""--sql
+    #         DELETE FROM Workouts
+    #         WHERE schedule_id IN (
+    #             SELECT id FROM Schedule WHERE date = ?
+    #         );
+    #     """, (workout_date,))

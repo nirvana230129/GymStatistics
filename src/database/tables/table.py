@@ -35,6 +35,16 @@ class Table(ABC):
         """
         self._cursor.execute(f'DELETE FROM {self.table_name};')
 
+    def delete_by_id(self, id):
+        """
+        Deletes a record with the given ID.
+        :param id: ID of the record to delete.
+        """
+        self._cursor.execute(f"""
+            DELETE FROM {self.table_name}
+            WHERE id = ?;
+        """, (id,))
+
     def get_all_data(self) -> list[tuple]:
         """
         Gets all data from the table.

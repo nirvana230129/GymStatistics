@@ -55,3 +55,19 @@ class TestExercises:
 
         assert table.get_exercise_id('C') is None
         assert table.get_exercise_id('c', may_be_alias=True) is None
+    
+    def test_delete_exercise(self, db_cursor):
+        table = ExercisesTable(db_cursor)
+        table.drop()
+        table.create()
+
+        table.add_exercise(**self.exercise1)
+        table.add_exercise(**self.exercise2)
+
+        assert table.get_all_data() == [(1, 'A', 'a', 'z'), (2, 'B', 'b', '')]
+
+        table.delete_by_id(1)
+        assert table.get_all_data() == [(2, 'B', 'b', '')]
+
+        table.delete_by_id(1)
+        assert table.get_all_data() == [(2, 'B', 'b', '')]

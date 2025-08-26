@@ -45,3 +45,22 @@ class ScheduleTable(Table):
         """, (workout_date, exercise_id, order_number))
         return self._cursor.lastrowid
 
+    def delete_schedule_by_date(self, workout_date: date) -> None:
+        """
+        Deletes all schedule records for the given date.
+        :param workout_date: date of the workout to delete.
+        """
+        self._cursor.execute("""--sql
+            DELETE FROM Schedule
+            WHERE date = ?;
+        """, (workout_date,))
+
+    def delete_schedule_by_exercise(self, exercise_id: int) -> None:
+        """
+        Deletes all schedule records for the given exercise.
+        :param exercise_id: ID of the exercise to delete from schedule.
+        """
+        self._cursor.execute("""--sql
+            DELETE FROM Schedule
+            WHERE exercise_id = ?;
+        """, (exercise_id,))
