@@ -177,15 +177,3 @@ class WorkoutsTable(Table):
             DELETE FROM Workouts
             WHERE schedule_id = ?;
         """, (schedule_id,))
-
-    # def delete_workouts_by_date(self, workout_date: date) -> None:
-    #     """
-    #     Deletes all workouts for the given date.
-    #     :param workout_date: date of the workout to delete.
-    #     """
-    #     self._cursor.execute("""--sql
-    #         DELETE FROM Workouts
-    #         WHERE schedule_id IN (
-    #             SELECT id FROM Schedule WHERE date = ?
-    #         );
-    #     """, (workout_date,))

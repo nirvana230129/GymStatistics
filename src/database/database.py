@@ -55,6 +55,15 @@ class Database:
         """
         self._connection.close()
 
+    def get_columns(self) -> list[str]:
+        """
+        Gets column names from the last executed query.
+        :return: list of column names.
+        """
+        if hasattr(self._cursor, 'description'):
+            return [desc[0] for desc in self._cursor.description]
+        return []
+
     def add_exercise(self, exercise_name: str, alias: str = None, target_muscle_group: str = None) -> None:
         """
         Adds a new exercise to the database.
@@ -133,22 +142,30 @@ class Database:
 
     def get_all_workouts(self) -> list[str]:
         """
-        Gets all exercises.
+        Gets all workouts.
         :return: list of all workouts.
         """
         return self._workouts_table.get_all_data()
 
-    def get_all_data(self) -> None:
+    def print_all_data(self) -> None:
         """
         Prints all data in the database.
         """
-        self._cursor.execute("""--sql
-            SELECT *
-            FROM Workouts W
-            JOIN Schedule S ON W.schedule_id = S.id
-            JOIN Exercises E ON S.exercise_id = E.id;
-        """)
-        return self._cursor.fetchall()
+        border = '=' * 80
+        sep = '-' * 60
+        for i in (
+            border,
+            self.get_all_exercises(),
+            self.get_columns(),
+            sep,
+            self.get_all_schedule(),
+            self.get_columns(),
+            sep,
+            self.get_all_workouts(),
+            self.get_columns(),
+            border,
+        ):
+            print(i)
 
     def plot_weights(self, exercise_name: str):
         """
@@ -188,3 +205,78 @@ class Database:
 
         plt.grid(True)
         plt.show()
+
+    def delete_exercise(self, exercise_name: str) -> None:
+        """
+        Deletes an exercise and all related data.
+        :param exercise_name: name of the exercise to delete.
+        """
+        exercise_id = self._exercises_table.get_exercise_id(exercise_name, may_be_alias=True)
+        if exercise_id is None:
+            raise ValueError(f'There is no "{exercise_name}" exercise')
+        
+        # Delete related workouts first
+        for schedule_id in self._get_schedule_ids_by_exercise(exercise_id):
+            self._workouts_table.delete_workouts_by_schedule(schedule_id)
+        
+        # Delete schedule records
+        self._schedule_table.delete_schedule_by_exercise(exercise_id)
+        
+        # Delete the exercise
+        self._exercises_table.delete_by_id(exercise_id)
+        self.commit()
+
+    def delete_workout(self, workout_date: date, exercise_name: str) -> None:
+        """
+        Deletes a specific workout.
+        :param workout_date: date of the workout.
+        :param exercise_name: name of the exercise.
+        """
+        exercise_id = self._exercises_table.get_exercise_id(exercise_name, may_be_alias=True)
+        if exercise_id is None:
+            raise ValueError(f'There is no "{exercise_name}" exercise')
+        
+        # Find schedule record
+        self._cursor.execute("""--sql
+            SELECT id FROM Schedule
+            WHERE date = ? AND exercise_id = ?;
+        """, (workout_date, exercise_id))
+        
+        schedule_record = self._cursor.fetchone()
+        if schedule_record is None:
+            raise ValueError(f'No workout found for {exercise_name} on {workout_date}')
+        
+        schedule_id = schedule_record[0]
+        
+        # Delete workouts
+        self._workouts_table.delete_workouts_by_schedule(schedule_id)
+        
+        # Delete schedule record
+        self._schedule_table.delete_by_id(schedule_id)
+        self.commit()
+
+    def delete_workout_by_date(self, workout_date: date) -> None:
+        """
+        Deletes all workouts for the given date.
+        :param workout_date: date of the workout to delete.
+        """        
+        # Delete schedule records
+        schedule_ids_to_delete = self._schedule_table.delete_schedule_by_date(workout_date)
+        
+        # Delete workouts first
+        for schedule_id in schedule_ids_to_delete:
+            self._workouts_table.delete_workouts_by_schedule(schedule_id)
+
+        self.commit()
+
+    def _get_schedule_ids_by_exercise(self, exercise_id: int) -> list[int]:
+        """
+        Gets all schedule IDs for the given exercise.
+        :param exercise_id: ID of the exercise.
+        :return: list of schedule IDs.
+        """
+        self._cursor.execute("""--sql
+            SELECT id FROM Schedule
+            WHERE exercise_id = ?;
+        """, (exercise_id,))
+        return [row[0] for row in self._cursor.fetchall()]

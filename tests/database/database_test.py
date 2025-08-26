@@ -70,5 +70,111 @@ class TestDatabase:
             db.find_workout(self.ws1['workout_date'], 'C')
         db.close()
 
-    def test_plot_weights(self):
-        pass
+    def test_delete_exercise(self):
+        db = Database(self.file)
+        db.create()
+        db.clear()
+
+        db.add_exercise('A')
+        db.add_exercise('B')
+        db.add_workout(**self.ws1)
+        db.add_workout(**self.ws2)
+        db.add_workout(**{
+            'workout_date': '2025-06-27', 'exercise_name': 'A', 'order_number': 2, 'feeling': 3,
+            'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
+        })
+        db.add_workout(**{
+            'workout_date': '2025-06-27', 'exercise_name': 'B', 'order_number': 1, 'feeling': 3,
+            'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
+        })
+
+        assert db.get_all_exercises() == [(1, 'A', None, None), (2, 'B', None, None)]
+        assert db.get_all_schedule() == [(1, '2025-03-27', 1, 1), (2, '2025-03-27', 2, 2), (3, '2025-06-27', 1, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(1, 1, 3, -1, 3, 45.0, 10, None, None, 'kg'), (2, 2, 3, -1, 3, 45.0, 10, None, None, 'kg'), 
+                                         (3, 3, 3, -1, 3, 45.0, 10, None, None, 'kg'), (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        
+        db.delete_exercise('A')
+        assert db.get_all_exercises() == [(2, 'B', None, None)]
+        assert db.get_all_schedule() == [(2, '2025-03-27', 2, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(2, 2, 3, -1, 3, 45.0, 10, None, None, 'kg'), (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+
+        with pytest.raises(ValueError):
+            db.delete_exercise('A')
+        
+        db.close()
+
+    def test_delete_workout(self):
+        db = Database(self.file)
+        db.create()
+        db.clear()
+
+        db.add_exercise('A')
+        db.add_exercise('B')
+        db.add_workout(**self.ws1)
+        db.add_workout(**self.ws2)
+        db.add_workout(**{
+            'workout_date': '2025-06-27', 'exercise_name': 'A', 'order_number': 2, 'feeling': 3,
+            'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
+        })
+        db.add_workout(**{
+            'workout_date': '2025-06-27', 'exercise_name': 'B', 'order_number': 1, 'feeling': 3,
+            'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
+        })
+
+        assert db.get_all_exercises() == [(1, 'A', None, None), (2, 'B', None, None)]
+        assert db.get_all_schedule() == [(1, '2025-03-27', 1, 1), (2, '2025-03-27', 2, 2), (3, '2025-06-27', 1, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(1, 1, 3, -1, 3, 45.0, 10, None, None, 'kg'), (2, 2, 3, -1, 3, 45.0, 10, None, None, 'kg'), 
+                                         (3, 3, 3, -1, 3, 45.0, 10, None, None, 'kg'), (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        
+        db.delete_workout('2025-03-27', 'A')
+        assert db.get_all_exercises() == [(1, 'A', None, None), (2, 'B', None, None)]
+        assert db.get_all_schedule() == [(2, '2025-03-27', 2, 2), (3, '2025-06-27', 1, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(2, 2, 3, -1, 3, 45.0, 10, None, None, 'kg'), (3, 3, 3, -1, 3, 45.0, 10, None, None, 'kg'), 
+                                         (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        
+        with pytest.raises(ValueError):
+            db.delete_workout('2025-03-27', 'A')
+        with pytest.raises(ValueError):
+            db.delete_workout('2025-03-27', 'qqqqq')
+        with pytest.raises(ValueError):
+            db.delete_workout('1999-03-27', 'A')
+        
+        db.close()
+
+    def test_delete_workout_by_date(self):
+        db = Database(self.file)
+        db.create()
+        db.clear()
+
+        db.add_exercise('A')
+        db.add_exercise('B')
+        db.add_workout(**self.ws1)
+        db.add_workout(**self.ws2)
+        db.add_workout(**{
+            'workout_date': '2025-06-27', 'exercise_name': 'A', 'order_number': 2, 'feeling': 3,
+            'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
+        })
+        db.add_workout(**{
+            'workout_date': '2025-06-27', 'exercise_name': 'B', 'order_number': 1, 'feeling': 3,
+            'sets': 3, 'weight': 45, 'repetitions': 10, 'units': 'kg',
+        })
+
+        assert db.get_all_exercises() == [(1, 'A', None, None), (2, 'B', None, None)]
+        assert db.get_all_schedule() == [(1, '2025-03-27', 1, 1), (2, '2025-03-27', 2, 2), (3, '2025-06-27', 1, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(1, 1, 3, -1, 3, 45.0, 10, None, None, 'kg'), (2, 2, 3, -1, 3, 45.0, 10, None, None, 'kg'), 
+                                         (3, 3, 3, -1, 3, 45.0, 10, None, None, 'kg'), (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        
+        db.delete_workout_by_date('2025-03-27')
+        assert db.get_all_exercises() == [(1, 'A', None, None), (2, 'B', None, None)]
+        assert db.get_all_schedule() == [(3, '2025-06-27', 1, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(3, 3, 3, -1, 3, 45.0, 10, None, None, 'kg'), (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        
+        db.delete_workout_by_date('2025-03-27')
+        assert db.get_all_exercises() == [(1, 'A', None, None), (2, 'B', None, None)]
+        assert db.get_all_schedule() == [(3, '2025-06-27', 1, 2), (4, '2025-06-27', 2, 1)]
+        assert db.get_all_workouts() == [(3, 3, 3, -1, 3, 45.0, 10, None, None, 'kg'), (4, 4, 3, -1, 3, 45.0, 10, None, None, 'kg')]
+        
+        db.close()
+
+    
+
