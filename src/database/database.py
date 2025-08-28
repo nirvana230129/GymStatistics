@@ -280,3 +280,52 @@ class Database:
             WHERE exercise_id = ?;
         """, (exercise_id,))
         return [row[0] for row in self._cursor.fetchall()]
+
+    def get_exercise_id(self, exercise_name: str, may_be_alias: bool = False) -> int | None:
+        """
+        Gets exercise ID by name.
+        :param exercise_name: name of the exercise.
+        :param may_be_alias: whether to search in aliases too.
+        :return: exercise ID or None if not found.
+        """
+        return self._exercises_table.get_exercise_id(exercise_name, may_be_alias)
+
+    def get_exercises_list(self) -> list[tuple]:
+        """
+        Gets list of all exercises with their details.
+        :return: list of tuples (id, name, alias, target_muscle_group).
+        """
+        self._cursor.execute("""--sql
+            SELECT id, name, alias, target_muscle_group
+            FROM Exercises
+            ORDER BY name;
+        """)
+        return self._cursor.fetchall()
+
+    def get_workouts_by_date(self, workout_date: date) -> list[tuple]:
+        """
+        Gets all workouts for the given date.
+        :param workout_date: date of the workout.
+        :return: list of workout records.
+        """
+        self._cursor.execute("""--sql
+            SELECT S.id, E.name, S.order_number, W.id, W.sets, W.weight, W.repetitions, W.time, W.speed, W.units, W.feeling
+            FROM Schedule S
+            JOIN Exercises E ON S.exercise_id = E.id
+            LEFT JOIN Workouts W ON S.id = W.schedule_id
+            WHERE S.date = ?
+            ORDER BY S.order_number;
+        """, (workout_date,))
+        return self._cursor.fetchall()
+
+    def get_all_dates(self) -> list[date]:
+        """
+        Gets all dates with workouts.
+        :return: list of dates.
+        """
+        self._cursor.execute("""--sql
+            SELECT DISTINCT date
+            FROM Schedule
+            ORDER BY date;
+        """)
+        return [datetime.strptime(row[0], '%Y-%m-%d').date() for row in self._cursor.fetchall()]
