@@ -4,10 +4,17 @@ from database.database import Database
 
 class Interface:
     """
-    Класс для взаимодействия с базой данных и отображения меню.
+    User-facing interface for interacting with the database via menus.
     """
 
     def __init__(self, db: Database, clear: bool = False, fill: bool = False) -> None:
+        """
+        Initialize interface with a database instance.
+
+        :param db: database adapter
+        :param clear: if True, recreate and clear tables
+        :param fill: if True, seed demo data (exercises and workouts)
+        """
         self.db = db
         if clear:
             self.db.create()
@@ -17,9 +24,15 @@ class Interface:
             self.fill_workouts()
 
     def clear_all(self):
+        """
+        Clear all tables via database adapter.
+        """
         self.db.clear()
 
     def fill_exercises(self) -> None:
+        """
+        Seed a small set of demo exercises.
+        """
         test_set = [
             ['Neutral Pull Up', 'Подтягивания узкие', 'Arms (Biceps)'],
             ['Wide Pull Up', 'Подтягивания широкие', 'Back'],
@@ -38,6 +51,9 @@ class Interface:
         self.db.commit()
 
     def fill_workouts(self) -> None:
+        """
+        Seed a small set of demo workouts for demo exercises.
+        """
         test_set = [
             {
                 'workout_date': '2025-03-27', 'exercise_name': 'Neutral Pull Up', 'order_number': 1, 'feeling': 3,
@@ -81,10 +97,18 @@ class Interface:
         self.db.commit()
 
     def print_all(self) -> None:
+        """
+        Print all data using database helper.
+        """
         for i in self.db.print_all_data():
             print(i)
 
     def _input_exercise(self) -> str | None:
+        """
+        Read exercise name from input, optionally add a new one.
+
+        :return: normalized exercise name or None to cancel
+        """
         def _parse_input_exercise() -> str | None:
             try:
                 if self.db.get_exercise_id(user_input):
@@ -109,6 +133,11 @@ class Interface:
         return res
 
     def add_workout(self) -> tuple | None:
+        """
+        Interactive flow to add a single workout.
+
+        :return: created workout rows or None on cancel
+        """
         workout_date = self._input_date()
         if workout_date is None:
             return None
@@ -136,6 +165,9 @@ class Interface:
         return self.db.find_workout(workout_date, exercise_name)
 
     def add_full_workout_day(self) -> None:
+        """
+        Interactive flow to add a full day across all exercises.
+        """
         workout_date = self._input_date()
         if workout_date is None:
             return None
@@ -178,6 +210,9 @@ class Interface:
         self.db.commit()
 
     def show_exercises(self) -> None:
+        """
+        Print all exercises in a table-like view.
+        """
         exercises = self.db.get_exercises_list()
         if not exercises:
             print("В базе данных нет упражнений.")
@@ -191,6 +226,9 @@ class Interface:
             print(f"{ex_id:<5} {name:<30} {(alias or ''):<20} {(muscle_group or ''):<20}")
 
     def show_dates(self) -> None:
+        """
+        Print all distinct dates that have workouts.
+        """
         dates = self.db.get_all_dates()
         if not dates:
             print("В базе данных нет тренировок.")
@@ -202,6 +240,11 @@ class Interface:
             print(f"{i}. {workout_date}")
 
     def show_workouts_by_date(self, workout_date: date) -> None:
+        """
+        Print workouts scheduled/executed for a given date.
+
+        :param workout_date: date to query
+        """
         workouts = self.db.get_workouts_by_date(workout_date)
         if not workouts:
             print(f"На {workout_date} нет тренировок.")
@@ -219,6 +262,9 @@ class Interface:
                 print(f"{'N/A':<5} {exercise_name:<25} {order_num:<8} {'N/A':<8} {'N/A':<8} {'N/A':<12} {'N/A':<8} {'N/A':<10} {'N/A':<8}")
 
     def delete_exercise_interactive(self) -> None:
+        """
+        Interactive deletion of an exercise with all related data.
+        """
         self.show_exercises()
         if not self.db.get_exercises_list():
             return
@@ -237,6 +283,9 @@ class Interface:
             print(f"Ошибка: {e}")
 
     def delete_workout_by_date_interactive(self) -> None:
+        """
+        Interactive deletion of all workouts for a given date.
+        """
         self.show_dates()
         if not self.db.get_all_dates():
             return
@@ -257,6 +306,9 @@ class Interface:
             print(f"Ошибка: {e}")
 
     def delete_specific_workout_interactive(self) -> None:
+        """
+        Interactive deletion of workouts for a given date and exercise.
+        """
         self.show_dates()
         if not self.db.get_all_dates():
             return
@@ -281,6 +333,9 @@ class Interface:
             print(f"Ошибка: {e}")
 
     def run_delete_menu(self) -> None:
+        """
+        Run the nested delete menu loop.
+        """
         while True:
             print("\n" + "="*50)
             print("МЕНЮ УДАЛЕНИЯ ДАННЫХ")
@@ -320,6 +375,9 @@ class Interface:
                 print("Неверный выбор. Попробуйте снова.")
 
     def run_main_menu(self) -> None:
+        """
+        Run the main menu loop.
+        """
         while True:
             print("\n" + "="*50)
             print("ГЛАВНОЕ МЕНЮ")
@@ -353,6 +411,9 @@ class Interface:
                 print("Неверный выбор. Попробуйте снова.")
 
     def add_exercise_interactive(self) -> None:
+        """
+        Interactive flow to add a new exercise.
+        """
         try:
             exercise_name = input("Введите название упражнения: ").strip()
             if not exercise_name:
@@ -370,6 +431,9 @@ class Interface:
             print(f"Ошибка: {e}")
 
     def add_workout_interactive(self) -> None:
+        """
+        Interactive flow to add a new workout with detailed fields.
+        """
         try:
             date_str = input("Введите дату тренировки (YYYY-MM-DD): ").strip()
             if not date_str:
@@ -436,6 +500,9 @@ class Interface:
             print(f"Ошибка: {e}")
 
     def find_workout_interactive(self) -> None:
+        """
+        Interactive search for workouts by date and exercise.
+        """
         try:
             date_str = input("Введите дату тренировки (YYYY-MM-DD): ").strip()
             if not date_str:
@@ -457,10 +524,15 @@ class Interface:
             print(f"Ошибка: {e}")
 
     def show_all_data(self) -> None:
-        # Метод print_all_data сам печатает содержимое.
+        """
+        Print everything from all tables.
+        """
         self.db.print_all_data()
 
     def plot_progress_interactive(self) -> None:
+        """
+        Interactive plotting for average weight over time for an exercise.
+        """
         try:
             exercise_name = input("Введите название упражнения для построения графика: ").strip()
             if not exercise_name:

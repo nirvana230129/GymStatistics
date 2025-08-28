@@ -8,13 +8,15 @@ from matplotlib.dates import DateFormatter
 
 class Database:
     """
-    This class is responsible for working with the database.
+    SQLite wrapper to work with exercises, schedule and workouts tables.
+    Provides CRUD operations and helper queries.
     """
 
     def __init__(self, db_file: str) -> None:
         """
-        Connects to the database.
-        :param db_file: database file to connect to.
+        Connect to the database and initialize table objects.
+
+        :param db_file: path to SQLite database file
         """
         self._connection = sqlite3.connect(db_file)
         self._cursor = self._connection.cursor()
@@ -24,7 +26,7 @@ class Database:
 
     def clear(self) -> None:
         """
-        Clears all tables of the database.
+        Clear all tables completely.
         """
         self._exercises_table.clear()
         self._workouts_table.clear()
@@ -33,7 +35,7 @@ class Database:
 
     def create(self) -> None:
         """
-        Creates 'WorkoutSessions' and 'Exercises' tables.
+        Re-create tables `Exercises`, `Workouts`, `Schedule`.
         """
         self._exercises_table.drop()
         self._workouts_table.drop()
@@ -45,20 +47,21 @@ class Database:
 
     def commit(self) -> None:
         """
-        Commits the changes to the database.
+        Commit current transaction.
         """
         self._connection.commit()
 
     def close(self) -> None:
         """
-        Closes the database connection.
+        Close the database connection.
         """
         self._connection.close()
 
     def get_columns(self) -> list[str]:
         """
-        Gets column names from the last executed query.
-        :return: list of column names.
+        Return column names of the last executed query.
+
+        :return: list of column names
         """
         if hasattr(self._cursor, 'description'):
             return [desc[0] for desc in self._cursor.description]
@@ -66,10 +69,11 @@ class Database:
 
     def add_exercise(self, exercise_name: str, alias: str = None, target_muscle_group: str = None) -> None:
         """
-        Adds a new exercise to the database.
-        :param exercise_name: name of the exercise.
-        :param alias: alias of the exercise.
-        :param target_muscle_group: target muscle group of the exercise.
+        Add an exercise.
+
+        :param exercise_name: exercise name
+        :param alias: alias
+        :param target_muscle_group: target muscle group
         """
         self._exercises_table.add_exercise(exercise_name, alias, target_muscle_group)
         self.commit()
@@ -86,17 +90,18 @@ class Database:
                     units: str = None,
                     feeling: int = None) -> None:
         """
-        Adds a new workout_session to the database.
-        :param workout_date: date of the workout.
-        :param exercise_name: name of the exercise.
-        :param order_number: order number of the exercise in the workout.
-        :param sets: number of sets (for cardio exercises sets are parts with constant speed).
-        :param weight: weight that was used during the workout (in machine or in equipment). If it is a list, it means that the weight was different for each set.
-        :param repetitions: number of repetitions. If it is a list, it means that the number of repetitions was different for each set.
-        :param time: time in seconds. If it is a list, it means that the time was different for each set.
-        :param speed: if it is a list, it means that the speed varied during the exercise.
-        :param units: the units of weight on the machine, the weight of an equipment, or the speed (kg/lbs or kph/mph).
-        :param feeling: feeling rating (from 1 to 5).
+        Add a workout session.
+
+        :param workout_date: date
+        :param exercise_name: exercise name (or alias)
+        :param order_number: exercise order in the day
+        :param sets: number of sets (for cardio: parts with constant speed)
+        :param weight: weight(s)
+        :param repetitions: repetitions
+        :param time: time(s)
+        :param speed: speed(s)
+        :param units: measurement units ('kg'/'lbs' or 'kph'/'mph')
+        :param feeling: feeling score (1..5)
         """
         exercise_id = self._exercises_table.get_exercise_id(exercise_name, may_be_alias=True)
         if exercise_id is None:
@@ -109,10 +114,9 @@ class Database:
 
     def find_workout(self, workout_date: date, exercise_name: str) -> tuple | None:
         """
-        Finds a workout with the given date and exercise.
-        :param workout_date: date of the workout.
-        :param exercise_name: name of the exercise.
-        :return: workout or None if no workout with the given date and exercise.
+        Find records by date and exercise.
+
+        :return: list of rows or empty list
         """
         exercise_id = self._exercises_table.get_exercise_id(exercise_name)
         if exercise_id is None:
@@ -128,28 +132,27 @@ class Database:
 
     def get_all_exercises(self) -> list[str]:
         """
-        Gets all exercises.
-        :return: list of all exercises.
+        Return all rows from `Exercises`.
+
+        :return: list of tuples
         """
         return self._exercises_table.get_all_data()
     
     def get_all_schedule(self) -> list[str]:
         """
-        Gets all schedule records.
-        :return: list of all schedule records.
+        Return all rows from `Schedule`.
         """
         return self._schedule_table.get_all_data()
 
     def get_all_workouts(self) -> list[str]:
         """
-        Gets all workouts.
-        :return: list of all workouts.
+        Return all rows from `Workouts`.
         """
         return self._workouts_table.get_all_data()
 
     def print_all_data(self) -> None:
         """
-        Prints all data in the database.
+        Print contents of all tables with separators.
         """
         border = '=' * 80
         sep = '-' * 60
@@ -169,8 +172,7 @@ class Database:
 
     def plot_weights(self, exercise_name: str):
         """
-        Plots the weight progression for the given exercise.
-        :param exercise_name: name of the exercise.
+        Plot average weight by date for the given exercise.
         """
         self._cursor.execute("""--sql
             SELECT S.date, W.weight
@@ -208,8 +210,7 @@ class Database:
 
     def delete_exercise(self, exercise_name: str) -> None:
         """
-        Deletes an exercise and all related data.
-        :param exercise_name: name of the exercise to delete.
+        Delete an exercise and all related schedule/workout records.
         """
         exercise_id = self._exercises_table.get_exercise_id(exercise_name, may_be_alias=True)
         if exercise_id is None:
@@ -228,9 +229,7 @@ class Database:
 
     def delete_workout(self, workout_date: date, exercise_name: str) -> None:
         """
-        Deletes a specific workout.
-        :param workout_date: date of the workout.
-        :param exercise_name: name of the exercise.
+        Delete workouts for the given date and exercise.
         """
         exercise_id = self._exercises_table.get_exercise_id(exercise_name, may_be_alias=True)
         if exercise_id is None:
@@ -257,8 +256,7 @@ class Database:
 
     def delete_workout_by_date(self, workout_date: date) -> None:
         """
-        Deletes all workouts for the given date.
-        :param workout_date: date of the workout to delete.
+        Delete all workouts for the given date.
         """        
         # Delete schedule records
         schedule_ids_to_delete = self._schedule_table.delete_schedule_by_date(workout_date)
@@ -271,9 +269,7 @@ class Database:
 
     def _get_schedule_ids_by_exercise(self, exercise_id: int) -> list[int]:
         """
-        Gets all schedule IDs for the given exercise.
-        :param exercise_id: ID of the exercise.
-        :return: list of schedule IDs.
+        Return all schedule IDs for the exercise.
         """
         self._cursor.execute("""--sql
             SELECT id FROM Schedule

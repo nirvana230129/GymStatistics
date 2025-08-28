@@ -3,6 +3,9 @@ from menu import Interface
 
 
 def main() -> None:
+    """
+    Application entrypoint: initialize DB, run the interactive menu, close DB.
+    """
     db = Database('src/database/gym_tracker.db')
     ui = Interface(db)
     ui.run_main_menu()

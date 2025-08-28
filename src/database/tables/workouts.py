@@ -5,7 +5,7 @@ from .table import Table
 
 class Workout:
     """
-    This class describes a workout — doing of one exercise.
+    Model for a single workout execution of one exercise.
     """
 
     def __init__(self, 
@@ -19,16 +19,18 @@ class Workout:
                  feeling: int = None,
                  local_order: int = -1) -> None:
         """
-        Initializes a workout. Either weight and repetitions (for exercises with machines or additional equipment) or time and speed (for cardio exercises) must be provided.
-        :param schedule_id: ID of the record in the Schedule table (id, date, exercise_id, order_number).
-        :param sets: number of sets (for cardio exercises sets are parts with constant speed).
-        :param weight: weight that was used during the workout (in machine or in equipment). If it is a list, it means that the weight was different for each set.
-        :param repetitions: number of repetitions. If it is a list, it means that the number of repetitions was different for each set.
-        :param time: time in seconds. If it is a list, it means that the time was different for each set.
-        :param speed: if it is a list, it means that the speed varied during the exercise.
-        :param units: the units of weight on the machine, the weight of an equipment, or the speed (kg/lbs or kph/mph).
-        :param feeling: feeling rating (from 1 to 5).
-        :param local_order: number of the current set if there are different values for each set.
+        Initialize a workout. You must provide either weight+repetitions
+        (for strength exercises) or time+speed (for cardio).
+
+        :param schedule_id: id in `Schedule` table
+        :param sets: number of sets
+        :param weight: weight(s) used
+        :param repetitions: repetition(s)
+        :param time: time(s) in seconds
+        :param speed: speed(s)
+        :param units: 'kg'/'lbs' or 'kph'/'mph'
+        :param feeling: feeling rating (1..5)
+        :param local_order: set index when storing per-set values
         """
         if weight is not None and repetitions is not None:
             self._weight_or_speed = 0
@@ -79,7 +81,8 @@ class Workout:
 
     def convert2list(self) -> list['Workout']:
         """
-        Converts the workout into a list of workouts if there is different information for sets. If there is no difference among sets returns list just with current wotkout.
+        Convert workout into list of workouts if per-set values exist.
+        If not, returns a list with the current workout only.
         """
         if not self._is_list:
             return [self]
@@ -101,7 +104,7 @@ class Workout:
 
     def __str__(self) -> str:
         """
-        Returns a string representation of the workout session.
+        Return a string representation of the workout session.
         """
         return '{\n'\
                f'\tschedule_id: {self.schedule_id},\n'\
@@ -119,19 +122,20 @@ class Workout:
 
 class WorkoutsTable(Table):
     """
-    This class is responsible for working with the WorkoutsTable table. Workout session describes doing of one exercise.
+    `Workouts` table: stores concrete workout executions.
     """
 
     def __init__(self, cursor: sqlite3.Cursor) -> None:
         """
-        Connects to the database.
-        :param cursor: cursor to the database.
+        Initialize the `Workouts` table wrapper.
+
+        :param cursor: SQLite cursor
         """
         super().__init__('Workouts', cursor)
 
     def create(self) -> None:
         """
-        Creates the table.
+        Create `Workouts` table.
         """
         self._cursor.execute("""--sql
             CREATE TABLE IF NOT EXISTS Workouts (
@@ -157,8 +161,9 @@ class WorkoutsTable(Table):
 
     def add_workout(self, workout: Workout) -> None:
         """
-        Adds a new workout to the table.
-        :param workout: workout to add.
+        Add a workout to the table.
+
+        :param workout: workout model
         """
         for w in workout.convert2list():
             self._cursor.execute("""--sql
@@ -170,8 +175,7 @@ class WorkoutsTable(Table):
     
     def delete_workouts_by_schedule(self, schedule_id: int) -> None:
         """
-        Deletes all workouts for the given schedule record.
-        :param schedule_id: ID of the schedule record.
+        Delete all workouts for the given schedule record id.
         """
         self._cursor.execute("""--sql
             DELETE FROM Workouts

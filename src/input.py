@@ -4,8 +4,10 @@ import re
 
 def parse_input(dtype):
     """
-    Parse data from the user.
-    :return: correct data of dtype type or None if data is invalid.
+    Parse data from the user for a given dtype using a type-specific parser.
+
+    :param dtype: 'date' | 'int' | 'float'
+    :return: parsed value of requested type or None if user entered 'exit'
     """
     input_functions = {
         'date': input_date,
@@ -29,9 +31,14 @@ def parse_input(dtype):
 
 def input_date(user_input) -> date:
     """
-    Inputs a date from the user in format yyyy-mm-dd or mm-dd (using current or last year).
-    :return: date
-    :raises: ValueError if date format is invalid
+    Parse a date from string.
+
+    Supported formats: yyyy-mm-dd and mm-dd (using current or previous year),
+    and a special shortcut 't' for today.
+
+    :param user_input: string with a date
+    :return: date object
+    :raises: ValueError if the date format is invalid
     """
     if user_input == 't':
         return date.today()
@@ -56,40 +63,44 @@ def input_date(user_input) -> date:
 
 def input_int(user_input) -> int:
     """
-    Inputs an integer from the user, removing any non-digit characters except minus sign.
-    :return: integer
-    :raises: ValueError if no valid integer found
+    Extract the first integer number from a string.
+
+    A leading minus is allowed. A trailing minus is ignored.
+
+    :param user_input: input string
+    :return: integer number
+    :raises: ValueError if no valid integer is found
     """
-    # Извлекаем числа с опциональным знаком минус в начале
-    # Игнорируем минус в конце числа
     numbers = re.findall(r'-?\d+', user_input)
     
     if numbers:
-        # Берем первое найденное число
         number = numbers[0]
-        # Убираем минус в конце, если он есть
         if number.endswith('-'):
             number = number[:-1]
         return int(number)
     else:
-        raise ValueError("Не найдено целое число")
+        raise ValueError("No integer number found")
 
 def input_float(user_input) -> float:
     """
-    Inputs a float from the user, removing any non-numeric characters except decimal point and minus sign.
-    :return: float
-    :raises: ValueError if no valid float found
+    Extract the first floating-point number from a string.
+
+    Supports decimal point and an optional leading minus sign.
+
+    :param user_input: input string
+    :return: floating-point number
+    :raises: ValueError if no valid float is found
     """
-    # Извлекаем числа с десятичной точкой и опциональным знаком минус в начале
-    # Паттерн: опциональный минус + цифры + опциональная точка + опциональные цифры
+    # Extract numbers with a decimal point and an optional leading minus sign
+    # Pattern: optional minus + digits + optional dot + optional digits OR optional minus + dot + digits
     numbers = re.findall(r'-?\d+\.?\d*|-?\.\d+', user_input)
     
     if numbers:
-        # Берем первое найденное число
+        # Take the first found number
         number = numbers[0]
-        # Убираем минус в конце, если он есть
+        # Strip a trailing minus if present
         if number.endswith('-'):
             number = number[:-1]
         return float(number)
     else:
-        raise ValueError("Не найдено дробное число")
+        raise ValueError("No floating-point number found")

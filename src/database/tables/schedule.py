@@ -5,19 +5,20 @@ from .table import Table
 
 class ScheduleTable(Table):
     """
-    This class is responsible for working with the Schedule table.
+    `Schedule` table: workout plan/ordering for a given date.
     """
 
     def __init__(self, cursor: sqlite3.Cursor) -> None:
         """
-        Connects to the database.
-        :param cursor: cursor to the database.
+        Initialize the `Schedule` table wrapper.
+
+        :param cursor: SQLite cursor
         """
         super().__init__('Schedule', cursor)
 
     def create(self) -> None:
         """
-        Creates the table.
+        Create `Schedule` table.
         """
         self._cursor.execute("""--sql
             CREATE TABLE IF NOT EXISTS Schedule (
@@ -33,11 +34,12 @@ class ScheduleTable(Table):
 
     def add_schedule_record(self, workout_date: date, exercise_id: str, order_number: int) -> None:
         """
-        Adds a new schedule record.
-        :param workout_date: date of the workout.
-        :param exercise_id: ID of the exercise.
-        :param order_number: order number of the exercise in the workout session.
-        :return: ID of the inserted record.
+        Add a schedule record.
+
+        :param workout_date: workout date
+        :param exercise_id: exercise id
+        :param order_number: sequence number within the workout day
+        :return: inserted row id
         """
         self._cursor.execute("""--sql
             INSERT INTO Schedule (date, exercise_id, order_number)
@@ -47,8 +49,10 @@ class ScheduleTable(Table):
 
     def delete_schedule_by_date(self, workout_date: date) -> list[int]:
         """
-        Deletes all schedule records for the given date.
-        :param workout_date: date of the workout to delete.
+        Delete all schedule records for the given date.
+
+        :param workout_date: date to delete records for
+        :return: list of deleted schedule ids
         """
         self._cursor.execute("""
             SELECT id FROM Schedule
@@ -64,8 +68,7 @@ class ScheduleTable(Table):
 
     def delete_schedule_by_exercise(self, exercise_id: int) -> None:
         """
-        Deletes all schedule records for the given exercise.
-        :param exercise_id: ID of the exercise to delete from schedule.
+        Delete all schedule records for the given exercise.
         """
         self._cursor.execute("""--sql
             DELETE FROM Schedule
