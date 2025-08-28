@@ -49,6 +49,7 @@ GymStatistics/
 │   │       └── workouts.py
 │   ├── input.py
 │   └── main.py
+│   └── menu.py
 ├── tests/
 │   ├── database/
 │   │   ├── database_test.py
