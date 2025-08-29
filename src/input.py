@@ -2,13 +2,22 @@ from datetime import date
 import re
 
 
-def parse_input(dtype):
+def parse_input(dtype, msg:str = None):
     """
     Parse data from the user for a given dtype using a type-specific parser.
 
     :param dtype: 'date' | 'int' | 'float'
+    :param msg: pre-print message
     :return: parsed value of requested type or None if user entered 'exit'
     """
+    if msg is not None:
+        msg = msg.strip()
+        if not msg.startswith('\t'):
+            msg = '\t' + msg
+        if not msg.endswith(':'):
+            msg = msg + ':'
+        msg += ' '
+
     input_functions = {
         'date': input_date,
         'int': input_int,
@@ -22,11 +31,17 @@ def parse_input(dtype):
     }
 
     res = None
+    first_time = True
     while res is None:
-        user_input = input(prompts[dtype]).strip().lower()
+        tip = msg if msg is not None and first_time else prompts[dtype]
+        user_input = input(tip).strip().lower()
+        first_time = False
         if user_input.lower() in ['exit', 'e']:
             break
-        res = input_functions[dtype](user_input)
+        try:
+            res = input_functions[dtype](user_input)
+        except ValueError as e:
+            print(f'There was an error during the entering: {e}. Please try again.')
     return res
 
 def input_date(user_input) -> date:
@@ -59,7 +74,7 @@ def input_date(user_input) -> date:
         return date(year, month, day)
         
     else:
-        raise ValueError
+        raise ValueError('Wrong date format')
 
 def input_int(user_input) -> int:
     """
@@ -91,14 +106,10 @@ def input_float(user_input) -> float:
     :return: floating-point number
     :raises: ValueError if no valid float is found
     """
-    # Extract numbers with a decimal point and an optional leading minus sign
-    # Pattern: optional minus + digits + optional dot + optional digits OR optional minus + dot + digits
     numbers = re.findall(r'-?\d+\.?\d*|-?\.\d+', user_input)
     
     if numbers:
-        # Take the first found number
         number = numbers[0]
-        # Strip a trailing minus if present
         if number.endswith('-'):
             number = number[:-1]
         return float(number)

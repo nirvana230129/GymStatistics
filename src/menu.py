@@ -1,5 +1,7 @@
 from datetime import date, datetime
 from database.database import Database
+from tabulate import tabulate
+from input import parse_input
 
 
 class Interface:
@@ -23,12 +25,6 @@ class Interface:
             self.fill_exercises()
             self.fill_workouts()
 
-    def clear_all(self):
-        """
-        Clear all tables via database adapter.
-        """
-        self.db.clear()
-
     def fill_exercises(self) -> None:
         """
         Seed a small set of demo exercises.
@@ -50,230 +46,218 @@ class Interface:
             self.db.add_exercise(name, alias, target_muscle_group)
         self.db.commit()
 
-    def fill_workouts(self) -> None:
+    def add_exercise(self) -> None:
         """
-        Seed a small set of demo workouts for demo exercises.
+        Interactive flow to add a new exercise.
         """
-        test_set = [
-            {
-                'workout_date': '2025-03-27', 'exercise_name': 'Neutral Pull Up', 'order_number': 1, 'feeling': 3,
-                'sets': 1, 'weight': 20, 'repetitions': 15, 'units': 'kg',
-            },
-            {
-                'workout_date': '2025-03-27', 'exercise_name': 'Seated Row', 'order_number': 2, 'feeling': 4,
-                'sets': 3, 'weight': 35, 'repetitions': 10, 'units': 'kg',
-            },
-            {
-                'workout_date': '2025-03-27', 'exercise_name': 'Treadmill', 'order_number': 3, 'feeling': 5,
-                'sets': 1, 'time': 600, 'speed': 5.5, 'units': 'kph',
-            },
-            {
-                'workout_date': '2025-04-05', 'exercise_name': 'Neutral Pull Up', 'order_number': 1, 'feeling': 4,
-                'sets': 1, 'weight': 12, 'repetitions': 10, 'units': 'kg',
-            },
-            {
-                'workout_date': '2025-04-05', 'exercise_name': 'Seated Row', 'order_number': 3, 'feeling': 3,
-                'sets': 3, 'weight': [35, 37.5, 37.5], 'repetitions': 10, 'units': 'kg',
-            },
-            {
-                'workout_date': '2025-04-05', 'exercise_name': 'Treadmill', 'order_number': 2, 'feeling': 5,
-                'sets': 3, 'time': [180, 240, 180], 'speed': [5.5, 8.5, 5.5], 'units': 'kph',
-            },
-            {
-                'workout_date': '2025-04-18', 'exercise_name': 'Neutral Pull Up', 'order_number': 3, 'feeling': 2,
-                'sets': 1, 'weight': 7, 'repetitions': 7, 'units': 'kg',
-            },
-            {
-                'workout_date': '2025-04-18', 'exercise_name': 'Seated Row', 'order_number': 2, 'feeling': 4,
-                'sets': 3, 'weight': 40, 'repetitions': [10, 10, 8], 'units': 'kg',
-            },
-            {
-                'workout_date': '2025-04-18', 'exercise_name': 'Treadmill', 'order_number': 1, 'feeling': 4,
-                'sets': 5, 'time': [180, 60, 120, 60, 300], 'speed': [5.5, 6.5, 8.5, 6.5, 5.5], 'units': 'kph',
-            },
-        ]
-        for workout_session in test_set:
-            self.db.add_workout(**workout_session)
-        self.db.commit()
+        try:
+            exercise_name = input("Введите название упражнения: ").strip()
+            if not exercise_name:
+                print("Отменено.")
+                return
+            alias = input("Введите псевдоним (необязательно): ").strip()
+            if not alias:
+                alias = None
+            target_muscle_group = input("Введите целевую группу мышц (необязательно): ").strip()
+            if not target_muscle_group:
+                target_muscle_group = None
+            self.db.add_exercise(exercise_name, alias, target_muscle_group)
+            print(f"Упражнение '{exercise_name}' успешно добавлено.")
+        except ValueError as e:
+            print(f"Ошибка: {e}")
 
-    def print_all(self) -> None:
+    def add_workout_day(self) -> None:
         """
-        Print all data using database helper.
+        Add a full workout day - date is asked once, then multiple exercises.
         """
-        for i in self.db.print_all_data():
-            print(i)
-
-    def _input_exercise(self) -> str | None:
-        """
-        Read exercise name from input, optionally add a new one.
-
-        :return: normalized exercise name or None to cancel
-        """
-        def _parse_input_exercise() -> str | None:
-            try:
-                if self.db.get_exercise_id(user_input):
-                    return user_input
-
-                y_n_inp = ''
-                while y_n_inp != 'n':
-                    y_n_inp = input(f'\tThere is no exercise "{user_input}" in the database. '
-                                    f'Do you want to add it? (y/n): ').strip().lower()
-                    if y_n_inp == 'y':
-                        self.db.add_exercise(user_input)
-                        return user_input
-            except ValueError:
-                print("\tIncorrect input. Please try again.")
-
-        res = None
-        while res is None:
-            user_input = input(f'\tEnter an exercise ({", ".join(self.db.get_all_exercises())}): ').strip().lower()
-            if user_input == 'exit':
-                break
-            res = _parse_input_exercise()
-        return res
-
-    def add_workout(self) -> tuple | None:
-        """
-        Interactive flow to add a single workout.
-
-        :return: created workout rows or None on cancel
-        """
-        workout_date = self._input_date()
+        print("\n=== ВВОД ТРЕНИРОВОЧНОГО ДНЯ ===")
+        workout_date = parse_input('date', 'Enter workout date')
         if workout_date is None:
-            return None
-        print('-' * 60)
-
-        exercise_name = self._input_exercise()
-        if exercise_name is None:
-            return None
-        print('-' * 60)
-
-        weight = self._input_num('weight', float)
-        if weight is None:
-            return None
-        print('-' * 60)
-
-        feeling_rating = self._input_num('feeling rating(1-5)', int)
-        if feeling_rating is None:
-            return None
-        print('-' * 60)
-
-        description = input('    Enter description: ')
-
-        self.db.add_workout(workout_date, exercise_name, weight, feeling_rating, description)
-        self.db.commit()
-        return self.db.find_workout(workout_date, exercise_name)
-
-    def add_full_workout_day(self) -> None:
-        """
-        Interactive flow to add a full day across all exercises.
-        """
-        workout_date = self._input_date()
-        if workout_date is None:
-            return None
-        print('-' * 60)
-
-        for exercise_name in self.db.get_all_exercises():
-            again = True
-            while again:
-                again = False
-                user_input = '-'
-                while user_input != 'skip' and user_input != '':
-                    user_input = input(f'\n\n"{exercise_name.capitalize()}" ({workout_date}). Enter "Skip" to skip '
-                                     f'this exercise or press enter to continue: ').strip().lower()
-                if user_input == 'skip':
-                    break
-
-                print('-' * 60)
-                weight = self._input_num('weight', float)
-                if weight is None:
-                    return None
-                print('-' * 60)
-                feeling_rating = self._input_num('feeling rating(1-5)', int)
-                if feeling_rating is None:
-                    return None
-                print('-' * 60)
-                description = input('    Enter description: ').strip()
-                print('-' * 60)
-
-                user_input = '-'
-                while user_input != 'skip' and user_input != 'again' and user_input != '':
-                    user_input = input(f'"{exercise_name.capitalize()}" ({workout_date}) {weight}kg {feeling_rating}/5 '
-                                       f'({description}). Enter "Skip" to skip this exercise or enter "Again" to edit '
-                                       f'current exercise or press enter to continue: ').strip().lower()
-                if user_input == 'skip':
-                    break
-                if user_input == 'again':
-                    again = True
+            print("Отменено.")
+            return
+            
+        print(f"\nВводим тренировки на {workout_date}")
+        print("Доступные упражнения:", ", ".join([f'{i[1]} ({i[2]})' for i in self.db.get_all_exercises()]))
+        
+        order_number = 0
+        while True:
+            print("\n" + "-" * 40)
+            exercise_name = input("Введите название упражнения (или 'exit' для завершения): ").strip()
+            if exercise_name.lower() == 'exit':
+                break                
+            if not exercise_name:
+                print("Название упражнения не может быть пустым.")
+                continue
+            if not self.db.get_exercise_id(exercise_name):
+                add_new = input(f"Упражнение '{exercise_name}' не найдено. Добавить? (y/n): ").strip().lower()
+                if add_new == 'y':
+                    self.db.add_exercise(exercise_name)
                 else:
-                    self.db.add_workout(workout_date, exercise_name, weight, feeling_rating, description)
-        self.db.commit()
-
-    def show_exercises(self) -> None:
-        """
-        Print all exercises in a table-like view.
-        """
-        exercises = self.db.get_exercises_list()
-        if not exercises:
-            print("В базе данных нет упражнений.")
-            return
-
-        print("\nСписок упражнений:")
-        print("-" * 80)
-        print(f"{'ID':<5} {'Название':<30} {'Псевдоним':<20} {'Группа мышц':<20}")
-        print("-" * 80)
-        for ex_id, name, alias, muscle_group in exercises:
-            print(f"{ex_id:<5} {name:<30} {(alias or ''):<20} {(muscle_group or ''):<20}")
-
-    def show_dates(self) -> None:
-        """
-        Print all distinct dates that have workouts.
-        """
-        dates = self.db.get_all_dates()
-        if not dates:
-            print("В базе данных нет тренировок.")
-            return
-
-        print("\nСписок дат с тренировками:")
-        print("-" * 30)
-        for i, workout_date in enumerate(dates, 1):
-            print(f"{i}. {workout_date}")
-
-    def show_workouts_by_date(self, workout_date: date) -> None:
-        """
-        Print workouts scheduled/executed for a given date.
-
-        :param workout_date: date to query
-        """
-        workouts = self.db.get_workouts_by_date(workout_date)
-        if not workouts:
-            print(f"На {workout_date} нет тренировок.")
-            return
-
-        print(f"\nТренировки на {workout_date}:")
-        print("-" * 100)
-        print(f"{'ID':<5} {'Упражнение':<25} {'Порядок':<8} {'Подходы':<8} {'Вес':<8} {'Повторения':<12} {'Время':<8} {'Скорость':<10} {'Единицы':<8}")
-        print("-" * 100)
-
-        for schedule_id, exercise_name, order_num, workout_id, sets, weight, reps, time, speed, units, feeling in workouts:
-            if workout_id:
-                print(f"{workout_id:<5} {exercise_name:<25} {order_num:<8} {sets:<8} {(str(weight) if weight else ''):<8} {(str(reps) if reps else ''):<12} {(str(time) if time else ''):<8} {(str(speed) if speed else ''):<10} {(units or ''):<8}")
+                    continue
+            
+            print(f"\nВвод данных для упражнения: {exercise_name}")
+            
+            sets = parse_input('int', 'Enter sets number')
+            if sets is None:
+                print("Отменено.")
+                continue
+                
+            exercise_type = input("Тип упражнения (1 - силовое, 2 - кардио): ").strip()
+            weight = None
+            repetitions = None
+            time = None
+            speed = None
+            units = None
+            
+            if exercise_type == '1':
+                weight = parse_input('float', 'Enter weight')
+                if weight is None:
+                    print("Отменено.")
+                    continue
+                repetitions =parse_input('int', 'Enter number of repetitions')
+                if repetitions is None:
+                    print("Отменено.")
+                    continue
+                units = 'kg'
+            elif exercise_type == '2':
+                time = parse_input('int', 'Enter time in seconds')
+                if time is None:
+                    print("Отменено.")
+                    continue
+                speed = parse_input('float', 'Enter speed')
+                if speed is None:
+                    print("Отменено.")
+                    continue
+                units = 'kph'
             else:
-                print(f"{'N/A':<5} {exercise_name:<25} {order_num:<8} {'N/A':<8} {'N/A':<8} {'N/A':<12} {'N/A':<8} {'N/A':<10} {'N/A':<8}")
+                print("Неверный тип упражнения.")
+                continue
+                
+            feeling = parse_input('int', 'Enter feeling rating')
+            if feeling is None:
+                print("Отменено.")
+                continue
+                
+            # Добавляем тренировку
+            self.db.add_workout(
+                workout_date=workout_date,
+                exercise_name=exercise_name,
+                order_number=order_number,
+                sets=sets,
+                weight=weight,
+                repetitions=repetitions,
+                time=time,
+                speed=speed,
+                units=units,
+                feeling=feeling
+            )
+            print(f"Тренировка '{exercise_name}' успешно добавлена.")
+            
+            order_number += 1
+            
+        self.db.commit()
+        print("Тренировочный день завершен.")
+
+    def add_single_exercise(self) -> None:
+        """
+        Add a single exercise for a specific date.
+        """
+        print("\n=== ВВОД ОДНОГО УПРАЖНЕНИЯ ===")
+        workout_date = parse_input('date', 'Enter workout date')
+        if workout_date is None:
+            print("Отменено.")
+            return
+            
+        exercise_name = input("Введите название упражнения: ").strip()
+        if not exercise_name:
+            print("Отменено.")
+            return
+            
+        # Проверяем, существует ли упражнение
+        if not self.db.get_exercise_id(exercise_name):
+            add_new = input(f"Упражнение '{exercise_name}' не найдено. Добавить? (y/n): ").strip().lower()
+            if add_new == 'y':
+                self.db.add_exercise(exercise_name)
+            else:
+                return
+                
+        print(f"\nВвод данных для упражнения: {exercise_name} на {workout_date}")
+        
+        order_number = parse_input('int', 'Enter order number')
+        if order_number is None:
+            print("Отменено.")
+            return
+            
+        sets = parse_input('int', 'Enter sets number')
+        if sets is None:
+            print("Отменено.")
+            return
+            
+        exercise_type = input("Тип упражнения (1 - силовое, 2 - кардио): ").strip()
+        weight = None
+        repetitions = None
+        time = None
+        speed = None
+        units = None
+        
+        if exercise_type == '1':
+            weight = parse_input('float', 'Enter weight')
+            if weight is None:
+                print("Отменено.")
+                return
+            repetitions = parse_input('int', 'Enter number of repetitions')
+            if repetitions is None:
+                print("Отменено.")
+                return
+            units = 'kg'
+        elif exercise_type == '2':
+            time = parse_input('int', 'Enter time in seconds')
+            if time is None:
+                print("Отменено.")
+                return
+            speed = parse_input('float', 'Enter speed')
+            if speed is None:
+                print("Отменено.")
+                return
+            units = 'kph'
+        else:
+            print("Неверный тип упражнения.")
+            return
+            
+        feeling = parse_input('int', 'Enter feeling rating')
+        if feeling is None:
+            print("Отменено.")
+            return
+            
+        # Добавляем тренировку
+        self.db.add_workout(
+            workout_date=workout_date,
+            exercise_name=exercise_name,
+            order_number=order_number,
+            sets=sets,
+            weight=weight,
+            repetitions=repetitions,
+            time=time,
+            speed=speed,
+            units=units,
+            feeling=feeling
+        )
+        self.db.commit()
+        print(f"Тренировка '{exercise_name}' успешно добавлена.")
 
     def delete_exercise_interactive(self) -> None:
         """
         Interactive deletion of an exercise with all related data.
         """
-        self.show_exercises()
-        if not self.db.get_exercises_list():
+        self.show_table_data(self.db.get_all_exercises())
+        if not self.db.get_all_exercises():
             return
         try:
             exercise_name = input("\nВведите название упражнения для удаления: ").strip()
             if not exercise_name:
                 print("Отменено.")
                 return
-            confirm = input(f"Вы уверены, что хотите удалить упражнение '{exercise_name}' и все связанные данные? (y/N): ").strip().lower()
+            confirm = input(f"Вы уверены, что хотите удалить упражнение '{exercise_name}' и все связанные данные? (y/n): ").strip().lower()
             if confirm == 'y':
                 self.db.delete_exercise(exercise_name)
                 print(f"Упражнение '{exercise_name}' успешно удалено.")
@@ -290,13 +274,13 @@ class Interface:
         if not self.db.get_all_dates():
             return
         try:
-            date_str = input("\nВведите дату тренировки для удаления (YYYY-MM-DD): ").strip()
-            if not date_str:
+            workout_date = parse_input('date', 'Enter workout date')
+            if workout_date is None:
                 print("Отменено.")
                 return
-            workout_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                
             self.show_workouts_by_date(workout_date)
-            confirm = input(f"Вы уверены, что хотите удалить все тренировки на {workout_date}? (y/N): ").strip().lower()
+            confirm = input(f"Вы уверены, что хотите удалить все тренировки на {workout_date}? (y/n): ").strip().lower()
             if confirm == 'y':
                 self.db.delete_workout_by_date(workout_date)
                 print(f"Все тренировки на {workout_date} успешно удалены.")
@@ -313,17 +297,18 @@ class Interface:
         if not self.db.get_all_dates():
             return
         try:
-            date_str = input("\nВведите дату тренировки (YYYY-MM-DD): ").strip()
-            if not date_str:
+            workout_date = parse_input('date', 'Enter workout date')
+            if workout_date is None:
                 print("Отменено.")
                 return
-            workout_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                
             self.show_workouts_by_date(workout_date)
             exercise_name = input("Введите название упражнения для удаления: ").strip()
             if not exercise_name:
                 print("Отменено.")
                 return
-            confirm = input(f"Вы уверены, что хотите удалить тренировку '{exercise_name}' на {workout_date}? (y/N): ").strip().lower()
+                
+            confirm = input(f"Вы уверены, что хотите удалить тренировку '{exercise_name}' на {workout_date}? (y/n): ").strip().lower()
             if confirm == 'y':
                 self.db.delete_workout(workout_date, exercise_name)
                 print(f"Тренировка '{exercise_name}' на {workout_date} успешно удалена.")
@@ -354,17 +339,17 @@ class Interface:
                 print("Возврат в главное меню.")
                 break
             elif choice == '1':
-                self.show_exercises()
+                # self.show_exercises()
+                self.show_table_data(self.db.get_all_exercises())
             elif choice == '2':
                 self.show_dates()
             elif choice == '3':
                 try:
-                    date_str = input("Введите дату (YYYY-MM-DD): ").strip()
-                    if date_str:
-                        workout_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    workout_date = parse_input('date', 'Enter workout date')
+                    if workout_date:
                         self.show_workouts_by_date(workout_date)
                 except ValueError:
-                    print("Неверный формат даты. Используйте YYYY-MM-DD.")
+                    print("Ошибка при вводе даты.")
             elif choice == '4':
                 self.delete_exercise_interactive()
             elif choice == '5':
@@ -379,140 +364,61 @@ class Interface:
         Run the main menu loop.
         """
         while True:
-            print("\n" + "="*50)
+            print("\n\n" + "="*50)
             print("ГЛАВНОЕ МЕНЮ")
             print("="*50)
             print("1. Добавить упражнение")
-            print("2. Добавить тренировку")
-            print("3. Найти тренировку")
-            print("4. Показать все данные")
-            print("5. Построить график прогресса")
-            print("6. Управление удалением данных")
+            print("2. Добавить выполнение одного упражнения")
+            print("3. Добавить тренировочный день")
+            print("4. Найти тренировку")
+            print("5. Показать все упражнения")
+            print("6. Показать все расписание")
+            print("7. Показать все тренировки")
+            print("8. Построить график прогресса")
+            print("9. Управление удалением данных")
             print("0. Выход")
 
-            choice = input("\nВыберите действие (0-6): ").strip()
+            choice = input("\nВыберите действие (0-9): ").strip()
 
             if choice == '0':
                 print("До свидания!")
                 break
             elif choice == '1':
-                self.add_exercise_interactive()
+                self.add_exercise()
             elif choice == '2':
-                self.add_workout_interactive()
+                self.add_single_exercise()
             elif choice == '3':
-                self.find_workout_interactive()
+                self.add_workout_day()
             elif choice == '4':
-                self.show_all_data()
+                self.find_workout()
             elif choice == '5':
-                self.plot_progress_interactive()
+                self.show_table_data(self.db.get_all_exercises())
             elif choice == '6':
+                self.show_table_data(self.db.get_all_schedule())
+            elif choice == '7':
+                self.show_table_data(self.db.get_all_workouts())
+            elif choice == '8':
+                self.plot_progress()
+            elif choice == '9':
                 self.run_delete_menu()
             else:
                 print("Неверный выбор. Попробуйте снова.")
 
-    def add_exercise_interactive(self) -> None:
-        """
-        Interactive flow to add a new exercise.
-        """
-        try:
-            exercise_name = input("Введите название упражнения: ").strip()
-            if not exercise_name:
-                print("Отменено.")
-                return
-            alias = input("Введите псевдоним (необязательно): ").strip()
-            if not alias:
-                alias = None
-            target_muscle_group = input("Введите целевую группу мышц (необязательно): ").strip()
-            if not target_muscle_group:
-                target_muscle_group = None
-            self.db.add_exercise(exercise_name, alias, target_muscle_group)
-            print(f"Упражнение '{exercise_name}' успешно добавлено.")
-        except ValueError as e:
-            print(f"Ошибка: {e}")
-
-    def add_workout_interactive(self) -> None:
-        """
-        Interactive flow to add a new workout with detailed fields.
-        """
-        try:
-            date_str = input("Введите дату тренировки (YYYY-MM-DD): ").strip()
-            if not date_str:
-                print("Отменено.")
-                return
-            workout_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            exercise_name = input("Введите название упражнения: ").strip()
-            if not exercise_name:
-                print("Отменено.")
-                return
-            order_str = input("Введите порядковый номер упражнения: ").strip()
-            if not order_str:
-                print("Отменено.")
-                return
-            order_number = int(order_str)
-            sets_str = input("Введите количество подходов: ").strip()
-            if not sets_str:
-                print("Отменено.")
-                return
-            sets = int(sets_str)
-            exercise_type = input("Тип упражнения (1 - силовое, 2 - кардио): ").strip()
-            weight = None
-            repetitions = None
-            time = None
-            speed = None
-            units = None
-            if exercise_type == '1':
-                weight_str = input("Введите вес (кг): ").strip()
-                if weight_str:
-                    weight = float(weight_str)
-                reps_str = input("Введите количество повторений: ").strip()
-                if reps_str:
-                    repetitions = int(reps_str)
-                units = 'kg'
-            elif exercise_type == '2':
-                time_str = input("Введите время в секундах: ").strip()
-                if time_str:
-                    time = int(time_str)
-                speed_str = input("Введите скорость: ").strip()
-                if speed_str:
-                    speed = float(speed_str)
-                units = 'kph'
-            else:
-                print("Неверный тип упражнения.")
-                return
-            feeling_str = input("Введите оценку самочувствия (1-5): ").strip()
-            feeling = None
-            if feeling_str:
-                feeling = int(feeling_str)
-            self.db.add_workout(
-                workout_date=workout_date,
-                exercise_name=exercise_name,
-                order_number=order_number,
-                sets=sets,
-                weight=weight,
-                repetitions=repetitions,
-                time=time,
-                speed=speed,
-                units=units,
-                feeling=feeling
-            )
-            print("Тренировка успешно добавлена.")
-        except ValueError as e:
-            print(f"Ошибка: {e}")
-
-    def find_workout_interactive(self) -> None:
+    def find_workout(self) -> None:
         """
         Interactive search for workouts by date and exercise.
         """
         try:
-            date_str = input("Введите дату тренировки (YYYY-MM-DD): ").strip()
-            if not date_str:
+            workout_date = parse_input('date', 'Enter workout date')
+            if workout_date is None:
                 print("Отменено.")
                 return
-            workout_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                
             exercise_name = input("Введите название упражнения: ").strip()
             if not exercise_name:
                 print("Отменено.")
                 return
+                
             result = self.db.find_workout(workout_date, exercise_name)
             if result:
                 print(f"\nНайдены тренировки для '{exercise_name}' на {workout_date}:")
@@ -523,13 +429,39 @@ class Interface:
         except ValueError as e:
             print(f"Ошибка: {e}")
 
-    def show_all_data(self) -> None:
+    def show_dates(self) -> None:
         """
-        Print everything from all tables.
+        Print all distinct dates that have workouts.
         """
-        self.db.print_all_data()
+        dates = self.db.get_all_dates()
+        if not dates:
+            print("В базе данных нет тренировок.")
+            return
 
-    def plot_progress_interactive(self) -> None:
+        print("\nСписок дат с тренировками:")
+        print("-" * 30)
+        for i, workout_date in enumerate(dates, 1):
+            print(f"{i}. {workout_date}")
+    
+    def show_workouts_by_date(self, workout_date: date) -> None:
+        """
+        Print workouts scheduled/executed for a given date.
+
+        :param workout_date: date to query
+        """
+        workouts = self.db.get_workouts_by_date(workout_date)
+        if not workouts:
+            print(f"На {workout_date} нет тренировок.")
+            return
+        self.show_table_data(workouts)
+
+    def show_table_data(self, data) -> None:
+        """
+        Print the table.
+        """
+        print(tabulate(data, headers=self.db.get_columns(), tablefmt="grid"))
+
+    def plot_progress(self) -> None:
         """
         Interactive plotting for average weight over time for an exercise.
         """

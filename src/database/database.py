@@ -130,7 +130,7 @@ class Database:
         """, (workout_date, exercise_id))
         return self._cursor.fetchall()
 
-    def get_all_exercises(self) -> list[str]:
+    def get_all_exercises(self) -> list[list[str]]:
         """
         Return all rows from `Exercises`.
 
@@ -138,13 +138,13 @@ class Database:
         """
         return self._exercises_table.get_all_data()
     
-    def get_all_schedule(self) -> list[str]:
+    def get_all_schedule(self) -> list[list[str]]:
         """
         Return all rows from `Schedule`.
         """
         return self._schedule_table.get_all_data()
 
-    def get_all_workouts(self) -> list[str]:
+    def get_all_workouts(self) -> list[list[str]]:
         """
         Return all rows from `Workouts`.
         """
@@ -276,8 +276,8 @@ class Database:
             WHERE exercise_id = ?;
         """, (exercise_id,))
         return [row[0] for row in self._cursor.fetchall()]
-
-    def get_exercise_id(self, exercise_name: str, may_be_alias: bool = False) -> int | None:
+    
+    def get_exercise_id(self, exercise_name: str, may_be_alias: bool = True) -> int | None:
         """
         Gets exercise ID by name.
         :param exercise_name: name of the exercise.
@@ -285,18 +285,6 @@ class Database:
         :return: exercise ID or None if not found.
         """
         return self._exercises_table.get_exercise_id(exercise_name, may_be_alias)
-
-    def get_exercises_list(self) -> list[tuple]:
-        """
-        Gets list of all exercises with their details.
-        :return: list of tuples (id, name, alias, target_muscle_group).
-        """
-        self._cursor.execute("""--sql
-            SELECT id, name, alias, target_muscle_group
-            FROM Exercises
-            ORDER BY name;
-        """)
-        return self._cursor.fetchall()
 
     def get_workouts_by_date(self, workout_date: date) -> list[tuple]:
         """
